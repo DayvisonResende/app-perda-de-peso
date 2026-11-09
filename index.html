@@ -255,6 +255,12 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 .pitem .n b{font-weight:600;font-size:14.5px;display:block}
 .pitem .n small{color:var(--muted);font-size:12.5px}
 .pitem .g{font-weight:800;font-size:14px;white-space:nowrap}
+.pitem .n{border-radius:10px;padding:4px 6px;margin:0 -6px}
+.pitem .n:hover{background:var(--surface-2)}
+.pitem .gbtn{display:inline-flex;align-items:center;gap:5px;font-weight:800;font-size:13.5px;white-space:nowrap;padding:6px 10px;border-radius:99px;background:var(--surface-2);border:1px solid var(--line)}
+.pitem .gbtn:hover{border-color:var(--kale);color:var(--kale)}
+.pitem .gbtn svg{color:var(--muted)}
+.pmeal.empty-meal{border-style:dashed}
 .daytotal{display:grid;grid-template-columns:auto 1fr;gap:4px 16px;align-items:center;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-lg);padding:14px 16px;margin-bottom:14px}
 .daytotal .k{font-family:var(--display);font-size:30px;font-weight:800;letter-spacing:-.02em;grid-row:span 2}
 .split{display:flex;height:10px;border-radius:99px;overflow:hidden;background:var(--line-2)}
@@ -270,6 +276,11 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 .shop .n b{display:block;font-weight:700}
 .shop .n small{color:var(--muted);font-size:12.5px}
 .shop .q{font-family:var(--display);font-weight:650;font-size:16px;white-space:nowrap}
+.shop-row{display:flex;align-items:center;gap:4px;margin-bottom:6px}
+.shop-row .shop{flex:1;min-width:0;margin-bottom:0}
+.shop .q .tag{margin-left:6px;vertical-align:middle;font-family:var(--body)}
+.shop-have{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:12px;border:1px dashed var(--line);margin-bottom:6px;color:var(--muted);font-size:14px}
+.shop-have b{flex:1;font-weight:600}
 .shop[aria-pressed="true"]{opacity:.55}
 .shop[aria-pressed="true"] .box{background:var(--kale);border-color:var(--kale);color:var(--kale-ink)}
 .shop[aria-pressed="true"] .n b{text-decoration:line-through}
@@ -279,6 +290,15 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 .prep-block ul{margin:8px 0 0;padding:0;list-style:none}
 .prep-block li{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line-2);font-size:14.5px}
 .prep-block li b{white-space:nowrap}
+.prep-block li.step{padding:0}
+.prep-block .stepb{display:flex;align-items:center;gap:12px;width:100%;text-align:left;padding:9px 4px;border-radius:10px;font-size:14.5px}
+.prep-block .stepb:hover{background:var(--surface-2)}
+.prep-block .stepb .t{flex:1;min-width:0}
+.prep-block .stepb .box{flex:none}
+.prep-block .stepb[aria-pressed="true"]{opacity:.55}
+.prep-block .stepb[aria-pressed="true"] .t > span{text-decoration:line-through}
+.prep-block .stepb[aria-pressed="true"] .box{background:var(--kale);border-color:var(--kale);color:var(--kale-ink)}
+.prep-num.done{background:var(--kale)}
 
 /* ---------- progress */
 .stats{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:14px}
@@ -777,6 +797,8 @@ const TIPS = {
 
 // Seu protocolo original, convertido para pesos crus
 const P_ = (id, g, prep) => (prep ? { id, g, prep } : { id, g });
+const emptyWeek = () => Array.from({ length: 7 }, () => ({ meals: {} }));
+const planIsEmpty = (plan) => !plan || plan.days.every((d) => Object.values(d.meals).every((a) => !a.length));
 const ORIGINAL_PLAN = [
   { tip: 'Tempere o frango grelhado com páprica defumada, limão e alho. No jantar, refogue bem o arroz de couve-flor com cebola picada.', meals: {
     almoco: [P_('frango_cru', 250, 'grelhado'), P_('brocolis_cru', 200, 'no vapor'), P_('cenoura_crua', 100, 'em rodelas'), P_('azeite', 15)],
@@ -1259,14 +1281,20 @@ function shoppingList(plan) {
   out.push({ key: 'temperos', n: 'Alho, cebola, limão e ervas', s: 'Hortifruti', buy: 'à vontade', plan: 'temperos livres', g: 0 });
   return out.sort((a, b) => SHOP_SECTIONS.indexOf(a.s) - SHOP_SECTIONS.indexOf(b.s) || b.g - a.g);
 }
-function prepPlan(plan) {
-  const blocks = [{ when: 'Domingo', covers: [0, 1, 2, 3], label: 'cobre domingo a quarta' }, { when: 'Quarta à noite', covers: [4, 5, 6], label: 'cobre quinta a sábado' }];
+const PREP_ROUNDS = {
+  1: [{ when: 'Domingo', covers: [0, 1, 2, 3, 4, 5, 6], label: 'a semana inteira de uma vez' }],
+  2: [{ when: 'Domingo', covers: [0, 1, 2, 3], label: 'cobre domingo a quarta' }, { when: 'Quarta à noite', covers: [4, 5, 6], label: 'cobre quinta a sábado' }],
+  3: [{ when: 'Domingo', covers: [0, 1], label: 'cobre domingo e segunda' }, { when: 'Segunda à noite', covers: [2, 3], label: 'cobre terça e quarta' }, { when: 'Quarta à noite', covers: [4, 5, 6], label: 'cobre quinta a sábado' }],
+};
+const prepS = () => { const c = Store.core; c.prep = c.prep || {}; c.prep.rounds = c.prep.rounds || 2; c.prep.done = c.prep.done || {}; return c.prep; };
+function prepPlan(plan, rounds = 2) {
+  const blocks = PREP_ROUNDS[rounds] || PREP_ROUNDS[2];
   return blocks.map((b) => {
     const prot = {}, veg = {}, carb = {}; let boxes = 0;
     for (const di of b.covers) {
       const day = plan.days[di]; if (!day) continue;
       for (const [mid, items] of Object.entries(day.meals)) {
-        if (mid === 'almoco' || mid === 'jantar') boxes++;
+        if ((mid === 'almoco' || mid === 'jantar') && items.length) boxes++;
         for (const it of items) {
           const bucket = hasRole(it.id, 'P') || (hasRole(it.id, 'S') && it.id !== 'ovo' && it.id !== 'whey' && it.id !== 'atum') ? prot : hasRole(it.id, 'V') ? veg : hasRole(it.id, 'K') || it.id === 'feijao_carioca' ? carb : null;
           if (!bucket) continue;
@@ -1279,7 +1307,7 @@ function prepPlan(plan) {
       const [nm] = splitName(food(id).n);
       const extra = id === 'arroz_branco' || id === 'arroz_integral' || id === 'feijao_carioca' || id === 'macarrao'
         ? ` (cozinhe ~${grams(Math.round(e.g * (BUY[GEN[id].b].f) / 10) * 10)} seco)` : '';
-      return { t: `${verb} ${nm.toLowerCase()}${extra}`, sub: [...e.preps].slice(0, 3).join(', '), g: grams(e.g) };
+      return { id, t: `${verb} ${nm.toLowerCase()}${extra}`, sub: [...e.preps].slice(0, 3).join(', '), g: grams(e.g) };
     });
     return { ...b, boxes, prot: line(prot, 'Preparar'), veg: line(veg, 'Higienizar e cortar'), carb: line(carb, 'Cozinhar') };
   });
@@ -1631,12 +1659,14 @@ function viewCardapio() {
 }
 function planSourceText(plan) {
   const when = plan.at ? ` em ${dShort(toISO(new Date(plan.at)))}` : '';
-  return { original: 'Seu protocolo low-carb original, com pesos crus.', gerado: `Montado pelo gerador${when}.`, ia: `Montado com o Claude${when}.`, ajustado: `Seu cardápio, com quantidades ajustadas à meta${when}.` }[plan.source] || 'Cardápio personalizado.';
+  if (planIsEmpty(plan)) return 'Semana vazia: escolha o que vai comer em cada dia, ou toque em Montar semana para o app sugerir.';
+  return { original: 'Seu protocolo low-carb original, com pesos crus.', gerado: `Montado pelo gerador${when}.`, ia: `Montado com o Claude${when}.`, ajustado: `Seu cardápio, com quantidades ajustadas à meta${when}.`, vazio: 'Seu cardápio, montado por você.' }[plan.source] || 'Cardápio personalizado.';
 }
 function planWeek(plan, d0) {
   const T = d0.plan.target, todayW = new Date().getDay();
   const totals = plan.days.map(planDayTotals);
-  const avg = totals.reduce((s, t) => s + t.kcal, 0) / 7;
+  const filled = totals.filter((t) => t.kcal > 0);
+  const avg = filled.length ? filled.reduce((s, t) => s + t.kcal, 0) / filled.length : 0;
   const off = avg - T;
   const strip = `<div class="daystrip">${plan.days.map((dy, i) => {
     const k = totals[i].kcal;
@@ -1645,23 +1675,26 @@ function planWeek(plan, d0) {
   }).join('')}</div>`;
   const day = plan.days[ui.planDay], t = totals[ui.planDay];
   const pk = t.p * 4, ck = t.c * 4, fk = t.f * 9, tk = pk + ck + fk || 1;
-  const warn = Math.abs(off) / T > 0.08 ? `<div class="hint mb12">${ic('info')}<div>Este cardápio fica em média <b>${fmt(Math.abs(off))} kcal ${off < 0 ? 'abaixo' : 'acima'}</b> da sua meta de ${fmt(T)} kcal.
+  const empty = planIsEmpty(plan);
+  const warn = !empty && Math.abs(off) / T > 0.08 ? `<div class="hint mb12">${ic('info')}<div>${filled.length < 7 ? `Nos ${filled.length} ${filled.length > 1 ? 'dias montados' : 'dia montado'}, o cardápio fica` : 'Este cardápio fica'} em média <b>${fmt(Math.abs(off))} kcal ${off < 0 ? 'abaixo' : 'acima'}</b> da sua meta de ${fmt(T)} kcal.
       <div class="row mt8 wrap"><button class="btn btn-primary btn-sm" data-a="plan-fit">Ajustar quantidades à meta</button><span class="faint" style="font-size:12.5px">Mantém os alimentos, só muda os gramas.</span></div></div></div>` : '';
-  const mealsHTML = MEALS.filter((m) => day.meals[m.id]).map((m) => {
-    const items = day.meals[m.id], mt = sumN(items);
-    return `<div class="pmeal">
+  const userMeals = settings().meals;
+  const shownMeals = MEALS.filter((m) => (day.meals[m.id] && day.meals[m.id].length) || userMeals.includes(m.id) || ui.planExtra === m.id);
+  const mealsHTML = shownMeals.map((m) => {
+    const items = day.meals[m.id] || [], mt = sumN(items);
+    return `<div class="pmeal ${items.length ? '' : 'empty-meal'}">
       <div class="pmeal-h"><span class="meal-ic">${ic(m.ic)}</span><b>${m.label}</b><span class="tag num">${fmt(mt.kcal)} kcal</span></div>
       ${items.map((it, idx) => {
         const f = food(it.id), [nm, st] = splitName(f ? f.n : it.id), n = nutr(it.id, it.g);
         return `<div class="pitem">
           <button class="n" data-a="pitem" data-m="${m.id}" data-x="${idx}"><b>${esc(nm)}</b><small>${[it.prep, st, fmt(n.kcal) + ' kcal'].filter(Boolean).map(esc).join(' · ')}</small></button>
-          <span class="g num">${unitLabel(it.id, it.g)}</span>
+          <button class="gbtn num" data-a="pitem" data-m="${m.id}" data-x="${idx}" aria-label="Editar quantidade de ${esc(nm)}">${unitLabel(it.id, it.g)} ${ic('pencil', 'sm')}</button>
           <button class="icon-btn sm" data-a="pswap" data-m="${m.id}" data-x="${idx}" aria-label="Trocar ${esc(nm)}">${ic('swap', 'sm')}</button>
         </div>`;
-      }).join('')}
+      }).join('') || '<p class="muted" style="font-size:13.5px;margin:4px 0">Nada planejado nesta refeição.</p>'}
       <div class="row mt8">
-        <button class="btn btn-ghost btn-sm" data-a="fp-planadd" data-m="${m.id}">${ic('plus', 'sm')} Item</button>
-        <button class="btn btn-ghost btn-sm right" data-a="plan-log" data-m="${m.id}">${ic('check', 'sm')} Registrar hoje</button>
+        <button class="btn btn-soft btn-sm" data-a="fp-planadd" data-m="${m.id}">${ic('plus', 'sm')} Adicionar alimento</button>
+        ${items.length ? `<button class="btn btn-ghost btn-sm right" data-a="plan-log" data-m="${m.id}">${ic('check', 'sm')} Registrar hoje</button>` : ''}
       </div>
     </div>`;
   }).join('');
@@ -1672,44 +1705,90 @@ function planWeek(plan, d0) {
       <div class="legend"><span><i style="background:var(--kale)"></i>Proteína ${fmt(t.p)} g</span><span><i style="background:var(--corn)"></i>Carbo ${fmt(t.c)} g</span><span><i style="background:var(--olive)"></i>Gordura ${fmt(t.f)} g</span><span>meta ${fmt(T)} kcal</span></div>
     </div>
     ${day.tip ? `<div class="tip">${ic('pot')}<div><b>${WD[ui.planDay]}:</b> ${esc(day.tip)}</div></div>` : ''}
+    ${t.kcal ? '' : `<div class="hint mb12">${ic('info')}<span>${WD[ui.planDay]} está vazio. Adicione alimentos em cada refeição, ou toque em <b>Sugerir ${WD[ui.planDay].toLowerCase()}</b> para o app montar um dia na sua meta.</span></div>`}
+    <div class="hint mb12" ${t.kcal ? '' : 'hidden'}>${ic('pencil')}<span>Toque num alimento ou na quantidade para editar os gramas, trocar ou remover. ${ic('swap', 'sm')} troca direto por outro com calorias parecidas.</span></div>
     <div class="plan-grid">${mealsHTML}</div>
+    ${MEALS.filter((m) => !shownMeals.includes(m)).length ? `<div class="row mt12 wrap gap6">${MEALS.filter((m) => !shownMeals.includes(m)).map((m) => `<button class="chip" data-a="plan-addmeal" data-m="${m.id}">${ic('plus', 'sm')} ${m.label}</button>`).join('')}</div>` : ''}
     <div class="row mt16 wrap">
-      <button class="btn btn-soft btn-sm" data-a="plan-reday">${ic('refresh', 'sm')} Refazer ${WD[ui.planDay].toLowerCase()}</button>
-      <button class="btn btn-ghost btn-sm" data-a="plan-copy">${ic('copy', 'sm')} Copiar para outro dia</button>
+      <button class="btn btn-soft btn-sm" data-a="plan-reday">${ic(t.kcal ? 'refresh' : 'spark', 'sm')} ${t.kcal ? 'Refazer' : 'Sugerir'} ${WD[ui.planDay].toLowerCase()}</button>
+      ${t.kcal ? `<button class="btn btn-ghost btn-sm" data-a="plan-copy">${ic('copy', 'sm')} Copiar para outro dia</button>` : ''}
+      ${empty ? '' : `<button class="btn btn-ghost btn-sm right" data-a="plan-clear" style="color:var(--tomato)">${ic('trash', 'sm')} Limpar semana</button>`}
     </div>`;
 }
+function shopS() {
+  const s = Store.core.shop || (Store.core.shop = { checked: {}, extra: [] });
+  s.checked = s.checked || {}; s.extra = s.extra || []; s.have = s.have || {}; s.qty = s.qty || {};
+  return s;
+}
 function planShop(plan) {
-  const list = shoppingList(plan), checked = (Store.core.shop && Store.core.shop.checked) || {};
-  const extras = (Store.core.shop && Store.core.shop.extra) || [];
+  const s = shopS(), all = planIsEmpty(plan) ? [] : shoppingList(plan), checked = s.checked;
+  const list = all.filter((x) => !s.have[x.key]), have = all.filter((x) => s.have[x.key]);
+  const extras = s.extra;
   const done = list.filter((x) => checked[x.key]).length + extras.filter((x) => checked[x.id]).length;
+  const editBtn = (k, n) => `<button class="icon-btn" data-a="shop-edit" data-k="${k}" aria-label="Editar ${esc(n)}">${ic('pencil', 'sm')}</button>`;
   let html = '', sec = '';
   for (const it of list) {
     if (it.s !== sec) { sec = it.s; html += `<h3>${sec}</h3>`; }
-    html += `<button class="shop" data-a="shop" data-k="${it.key}" aria-pressed="${!!checked[it.key]}"><span class="box">${ic('check', 'sm')}</span>
-      <span class="n"><b>${esc(it.n)}</b><small>no cardápio: ${it.plan}${it.note ? ' · ' + esc(it.note) : ''}</small></span><span class="q num">${it.buy}</span></button>`;
+    const q = s.qty[it.key];
+    html += `<div class="shop-row"><button class="shop" data-a="shop" data-k="${it.key}" aria-pressed="${!!checked[it.key]}"><span class="box">${ic('check', 'sm')}</span>
+      <span class="n"><b>${esc(it.n)}</b><small>no cardápio: ${it.plan}${q ? ' · calculado ' + esc(it.buy) : it.note ? ' · ' + esc(it.note) : ''}</small></span><span class="q num">${esc(q || it.buy)}</span></button>${editBtn(it.key, it.n)}</div>`;
   }
   if (extras.length) {
-    html += `<h3>Extras</h3>` + extras.map((x) => `<div class="row"><button class="shop grow" data-a="shop" data-k="${x.id}" aria-pressed="${!!checked[x.id]}"><span class="box">${ic('check', 'sm')}</span><span class="n"><b>${esc(x.n)}</b></span></button><button class="icon-btn" data-a="shop-del" data-id="${x.id}" aria-label="Remover">${ic('x')}</button></div>`).join('');
+    html += `<h3>Extras</h3>` + extras.map((x) => `<div class="shop-row"><button class="shop" data-a="shop" data-k="${x.id}" aria-pressed="${!!checked[x.id]}"><span class="box">${ic('check', 'sm')}</span><span class="n"><b>${esc(x.n)}</b></span>${x.q ? `<span class="q num">${esc(x.q)}</span>` : ''}</button>${editBtn(x.id, x.n)}</div>`).join('');
+  }
+  if (have.length) {
+    html += `<h3>Já tenho em casa</h3>` + have.map((x) => `<div class="shop-have"><b>${esc(x.n)}</b><button class="btn btn-ghost btn-sm" data-a="shop-back" data-k="${x.key}">${ic('plus', 'sm')} Voltar à lista</button></div>`).join('');
   }
   const total = list.length + extras.length;
-  return `<div class="row mt16 wrap" style="justify-content:space-between">
+  if (!all.length) html = `<p class="empty">Nada do cardápio ainda. Adicione alimentos na aba Semana e a lista se monta sozinha${extras.length ? '' : ', ou inclua itens avulsos abaixo'}.</p>` + html;
+  return `${total ? `<div class="row mt16 wrap" style="justify-content:space-between">
       <div><b class="num">${done}/${total}</b> <span class="muted">itens no carrinho</span></div>
-      <div class="row wrap"><button class="btn btn-primary btn-sm" data-a="shop-share">${ic('share', 'sm')} Enviar lista</button><button class="btn btn-ghost btn-sm" data-a="shop-clear">Desmarcar tudo</button></div>
+      <div class="row wrap"><button class="btn btn-primary btn-sm" data-a="shop-share">${ic('share', 'sm')} Enviar lista</button>${done ? `<button class="btn btn-ghost btn-sm" data-a="shop-clear">Desmarcar tudo</button>` : ''}</div>
     </div>
-    <div class="mt8">${bar(done, total, 'var(--kale)')}</div>
+    <div class="mt8">${bar(done, total, 'var(--kale)')}</div>` : ''}
+    ${all.length ? `<div class="hint mt12">${ic('pencil')}<span>Toque no ${ic('pencil', 'sm')} de um item para mudar a quantidade ou marcar que já tem em casa.</span></div>` : ''}
     <div class="shop-sec">${html}</div>
     <div class="row mt12"><input class="input grow" id="shop-extra" placeholder="Adicionar item (ex.: papel-toalha)" maxlength="60"><button class="btn btn-soft" data-a="shop-add">${ic('plus', 'sm')} Incluir</button></div>
-    <p class="faint mt12" style="font-size:12.5px">As quantidades já somam a perda na limpeza (talos, cascas) e convertem arroz e feijão cozidos para o peso seco.</p>`;
+    ${all.length ? '<p class="faint mt12" style="font-size:12.5px">As quantidades calculadas já somam a perda na limpeza (talos, cascas) e convertem arroz e feijão cozidos para o peso seco.</p>' : ''}`;
+}
+let SE = null;
+function shopEditOpen(k) { SE = { k }; Sheet.open({ label: 'Item da lista', render: shopEditHTML }); }
+function shopEditHTML() {
+  const s = shopS(), ex = s.extra.find((x) => x.id === SE.k), it = ex ? null : shoppingList(Store.core.plan).find((x) => x.key === SE.k);
+  if (!ex && !it) return '';
+  const cur = ex ? ex.q || '' : s.qty[SE.k] || it.buy;
+  return `${sheetHead(esc(ex ? ex.n : it.n), it ? `No cardápio da semana: ${esc(it.plan)}` : 'Item avulso')}
+  <div class="sheet-b">
+    ${ex ? `<label class="field"><span>Nome</span><input class="input" id="se-n" value="${esc(ex.n)}" maxlength="60"></label>` : ''}
+    <label class="field ${ex ? 'mt12' : ''}"><span>Quantidade para comprar</span><input class="input" id="se-q" value="${esc(cur)}" placeholder="${ex ? 'opcional, ex.: 2 pacotes' : ''}" maxlength="30"></label>
+    ${it ? `<p class="faint mt8" style="font-size:12.5px">Calculado: ${esc(it.buy)}${it.buy !== it.plan ? ' (já com a perda na limpeza)' : ''}. Mude se for comprar em embalagem fechada ou se já tem uma parte em casa.</p>` : ''}
+    ${it && s.qty[SE.k] ? `<button class="btn btn-ghost btn-sm mt8" data-a="se-reset">${ic('refresh', 'sm')} Voltar para ${esc(it.buy)}</button>` : ''}
+  </div>
+  <div class="sheet-f">
+    ${ex ? `<button class="icon-btn" data-a="se-del" aria-label="Remover da lista" style="color:var(--tomato)">${ic('trash')}</button>` : `<button class="btn btn-soft" data-a="se-have">${ic('home', 'sm')} Já tenho em casa</button>`}
+    <button class="btn btn-primary grow" data-a="se-save">Salvar</button>
+  </div>`;
 }
 function planPrep(plan) {
-  const blocks = prepPlan(plan);
-  const li = (x) => `<li><span>${esc(x.t)}${x.sub ? `<br><small class="muted">${esc(x.sub)}</small>` : ''}</span><b class="num">${x.g}</b></li>`;
-  return `<div class="panel mt16">
-    <p class="muted mb12">Carne cozida dura de 3 a 4 dias na geladeira, então o preparo da semana fica em duas rodadas. Pese tudo cru, cozinhe junto e divida em potes.</p>
-    ${blocks.map((b, i) => `<div class="prep-block"><span class="prep-num">${i + 1}</span><div>
-      <h2>${b.when}</h2><p class="muted" style="font-size:13.5px">${b.label} · ${b.boxes} marmitas de almoço e jantar</p>
-      <ul>${b.prot.map(li).join('')}${b.carb.map(li).join('')}${b.veg.map(li).join('')}</ul>
-    </div></div>`).join('')}
+  if (planIsEmpty(plan)) return `<div class="panel mt16 empty"><p>Sem nada para preparar ainda.</p><p class="muted">Monte o almoço e o jantar na aba Semana e o app calcula quanto cozinhar em cada rodada.</p></div>`;
+  const ps = prepS(), blocks = prepPlan(plan, ps.rounds).filter((b) => b.prot.length + b.carb.length + b.veg.length);
+  const key = (bi, x) => `${ps.rounds}:${bi}:${x.id}:${x.t.split(' ')[0]}`;
+  const li = (bi, x) => { const k = key(bi, x), on = !!ps.done[k]; return `<li class="step"><button class="stepb" data-a="prep-step" data-k="${esc(k)}" aria-pressed="${on}"><span class="box">${ic('check', 'sm')}</span>
+    <span class="t"><span>${esc(x.t)}</span>${x.sub ? `<br><small class="muted">${esc(x.sub)}</small>` : ''}</span><b class="num">${x.g}</b></button></li>`; };
+  const note = { 1: 'Tudo numa rodada só. Carne cozida dura de 3 a 4 dias na geladeira: congele as marmitas de quinta a sábado e passe para a geladeira na véspera.', 2: 'Carne cozida dura de 3 a 4 dias na geladeira, então o preparo fica em duas rodadas. Pese tudo cru, cozinhe junto e divida em potes.', 3: 'Três rodadas menores: comida sempre fresca, sem precisar congelar. Pese tudo cru, cozinhe junto e divida em potes.' }[ps.rounds];
+  const anyDone = Object.keys(ps.done).some((k) => k.startsWith(ps.rounds + ':'));
+  return `<div class="row mt16 wrap" style="justify-content:space-between;align-items:center">
+      <div class="row wrap gap6"><span class="muted" style="font-size:13.5px;font-weight:600">Cozinhar em</span>
+        <div class="chips">${[1, 2, 3].map((n) => `<button class="chip" data-a="prep-rounds" data-n="${n}" aria-pressed="${ps.rounds === n}">${n} ${n > 1 ? 'rodadas' : 'rodada'}</button>`).join('')}</div></div>
+      ${anyDone ? `<button class="btn btn-ghost btn-sm" data-a="prep-reset">${ic('refresh', 'sm')} Desmarcar tudo</button>` : ''}
+    </div>
+    <div class="panel mt12">
+    <p class="muted mb12">${note} Toque num passo para marcar como feito.</p>
+    ${blocks.map((b, bi) => { const all = [...b.prot, ...b.carb, ...b.veg], ok = all.every((x) => ps.done[key(bi, x)]);
+      return `<div class="prep-block"><span class="prep-num ${ok ? 'done' : ''}">${ok ? ic('check') : bi + 1}</span><div>
+      <h2>${b.when}</h2><p class="muted" style="font-size:13.5px">${b.label}${b.boxes ? ` · ${b.boxes} ${b.boxes > 1 ? 'marmitas' : 'marmita'} de almoço e jantar` : ''}</p>
+      <ul>${all.map((x) => li(bi, x)).join('')}</ul>
+    </div></div>`; }).join('')}
   </div>`;
 }
 
@@ -2291,7 +2370,8 @@ function applyPlan(plan, msg) {
   const prev = Store.core.plan ? clone(Store.core.plan) : null, prevP = { style: Store.p.style, meals: Store.p.meals };
   Store.core.plan = plan;
   if (plan.prefs) { Store.p.style = plan.prefs.style; Store.p.meals = [...plan.prefs.meals]; }
-  Store.core.shop = { checked: {}, extra: (Store.core.shop && Store.core.shop.extra) || [] };
+  Store.core.shop = { checked: {}, extra: (Store.core.shop && Store.core.shop.extra) || [], have: (Store.core.shop && Store.core.shop.have) || {} };
+  if (Store.core.prep) Store.core.prep.done = {};
   Store.saveCore(); Sheet.close(true); ui.planTab = 'semana'; App.render(); window.scrollTo(0, 0);
   App.toast(msg, () => { Store.core.plan = prev; Object.assign(Store.p, prevP); Store.saveCore(); App.render(); });
 }
@@ -2398,10 +2478,10 @@ function confirmOpen(title, body, okLabel, onOk, danger) {
     <div class="sheet-f"><button class="btn btn-soft grow" data-a="sheet-close">Cancelar</button><button class="btn ${danger ? 'btn-carrot' : 'btn-primary'} grow" data-a="confirm-ok">${okLabel}</button></div>`, onOk });
 }
 function shopText() {
-  const list = shoppingList(Store.core.plan), ex = (Store.core.shop && Store.core.shop.extra) || [], ck = (Store.core.shop && Store.core.shop.checked) || {};
+  const sh = shopS(), list = planIsEmpty(Store.core.plan) ? [] : shoppingList(Store.core.plan), ex = sh.extra, ck = sh.checked;
   let out = '🛒 Lista da semana (BioTrack)\n', sec = '';
-  for (const it of list) { if (ck[it.key]) continue; if (it.s !== sec) { sec = it.s; out += `\n*${sec}*\n`; } out += `▢ ${it.n} — ${it.buy}\n`; }
-  const exl = ex.filter((x) => !ck[x.id]); if (exl.length) out += `\n*Extras*\n` + exl.map((x) => `▢ ${x.n}`).join('\n') + '\n';
+  for (const it of list) { if (ck[it.key] || sh.have[it.key]) continue; if (it.s !== sec) { sec = it.s; out += `\n*${sec}*\n`; } out += `▢ ${it.n} — ${sh.qty[it.key] || it.buy}\n`; }
+  const exl = ex.filter((x) => !ck[x.id]); if (exl.length) out += `\n*Extras*\n` + exl.map((x) => `▢ ${x.n}${x.q ? ' — ' + x.q : ''}`).join('\n') + '\n';
   return out.trim();
 }
 async function doExport() {
@@ -2456,8 +2536,8 @@ function newCore(o) {
     profile: { name: o.name, sex: o.sex, age: o.age, height: o.height, weight: o.weight, goalWeight: o.goalWeight, activity: o.activity, pace: o.pace, waist: o.waist, neck: o.neck, hip: null, bmrFormula: 'mifflin', bmrManual: null, customTarget: null, style: 'lowcarb', meals: ['almoco', 'lanche', 'jantar'], waterPerKg: 35, theme: 'auto' },
     weights: [{ id: uid(), date: todayISO(), weight: o.weight, waist: o.waist || null }],
     habits: [{ id: 'multivit', n: 'Multivitamínico depois do almoço' }, { id: 'azeite', n: 'Azeite: no máximo 2 colheres de sopa' }],
-    customFoods: [], recent: [], shop: { checked: {}, extra: [{ id: 'e_multivit', n: 'Multivitamínico (se estiver acabando)' }] },
-    plan: { days: clone(ORIGINAL_PLAN), source: 'original', at: Date.now() },
+    customFoods: [], recent: [], shop: { checked: {}, extra: [], have: {}, qty: {} },
+    plan: { days: emptyWeek(), source: 'vazio', at: Date.now() },
     created: todayISO(),
   };
 }
@@ -2574,7 +2654,10 @@ const A = {
   },
   'ws-del': () => { Store.core.weights = Store.core.weights.filter((x) => x.id !== WS.id); Store.syncProfile(); Store.saveCore(); Sheet.close(true); App.render(); App.toast('Pesagem excluída'); },
   ptab: (el) => { ui.planTab = el.dataset.t; App.render(); },
-  pday: (el) => { ui.planDay = Number(el.dataset.i); App.render(); },
+  'prep-rounds': (el) => { prepS().rounds = Number(el.dataset.n); Store.saveCore(); App.render(); },
+  'prep-step': (el) => { const ps = prepS(), k = el.dataset.k; if (ps.done[k]) delete ps.done[k]; else ps.done[k] = 1; Store.saveCore(); const y = window.scrollY; App.render(); window.scrollTo(0, y); },
+  'prep-reset': () => { const ps = prepS(); ps.done = {}; Store.saveCore(); App.render(); },
+  pday: (el) => { ui.planDay = Number(el.dataset.i); ui.planExtra = null; App.render(); },
   pitem: (el) => piOpen(el.dataset.m, Number(el.dataset.x)),
   pswap: (el) => piOpen(el.dataset.m, Number(el.dataset.x), 'swap'),
   'pi-step': (el) => { const it = Store.core.plan.days[ui.planDay].meals[PI.meal][PI.idx], st = (GEN[it.id] && GEN[it.id].step) || 10; PI.g = Math.max(st, PI.g + Number(el.dataset.d) * st); const i = document.querySelector('[data-in="pi-g"]'); if (i) i.value = PI.g; const nu = document.querySelector('[data-live="pi-nut"]'); if (nu) nu.innerHTML = nutHTML(nutr(it.id, PI.g)); },
@@ -2605,14 +2688,19 @@ const A = {
   },
   'plan-reday': () => {
     const s = settings(), pr = Store.core.plan.prefs || {}, d = computeDay(todayISO());
-    const style = pr.style || s.style, meals = pr.meals || [...new Set(Object.keys(Store.core.plan.days[ui.planDay].meals))];
+    const cur = Object.keys(Store.core.plan.days[ui.planDay].meals).filter((k) => Store.core.plan.days[ui.planDay].meals[k].length);
+    const style = pr.style || s.style, meals = pr.meals || (cur.length ? cur : s.meals), wasEmpty = !cur.length;
     const tmp = buildPlan({ style, meals, kcal: d.plan.target, protein: Calc.macros(d.plan.target, d.weight, Store.p.goalWeight, style).protein, prot: pr.prot || GEN_DEFAULTS.prot, veg: pr.veg || GEN_DEFAULTS.veg, carb: pr.carb || GEN_DEFAULTS.carb, batch: false, seed: Date.now() });
     const prev = clone(Store.core.plan.days[ui.planDay]), di = ui.planDay;
     Store.core.plan.days[di] = tmp.days[(di + Math.floor(Math.random() * 7)) % 7];
     Store.saveCore(); App.render();
-    App.toast(`${WD[di]} refeito`, () => { Store.core.plan.days[di] = prev; Store.saveCore(); App.render(); });
+    App.toast(`${WD[di]} ${wasEmpty ? 'sugerido' : 'refeito'}`, () => { Store.core.plan.days[di] = prev; Store.saveCore(); App.render(); });
   },
   'plan-copy': () => copyDayOpen(),
+  'plan-clear': () => {
+    confirmOpen('Limpar a semana?', 'Todos os alimentos dos 7 dias saem do cardápio, e a lista de compras e o preparo ficam vazios. Dá para desfazer logo em seguida.', 'Limpar semana', () => applyPlan({ days: emptyWeek(), source: 'vazio', at: Date.now() }, 'Semana limpa'), true);
+  },
+  'plan-addmeal': (el) => { ui.planExtra = el.dataset.m; fpOpen({ kind: 'plan', day: ui.planDay, meal: el.dataset.m }); },
   'cd-tog': (el) => { const s = Sheet.cur.sel, i = Number(el.dataset.i); s.has(i) ? s.delete(i) : s.add(i); Sheet.draw(); },
   'cd-go': () => {
     const sel = [...Sheet.cur.sel], prev = clone(Store.core.plan), src = Store.core.plan.days[ui.planDay];
@@ -2634,6 +2722,24 @@ const A = {
   'gen-stop': () => { if (GS.ctl) GS.ctl.abort(); },
   'plan-orig': () => applyPlan({ days: clone(ORIGINAL_PLAN), source: 'original', at: Date.now(), prefs: { style: 'lowcarb', meals: ['almoco', 'lanche', 'jantar'], prot: GEN_DEFAULTS.prot, veg: GEN_DEFAULTS.veg, carb: GEN_DEFAULTS.carb, batch: true } }, 'Cardápio original de volta'),
   shop: (el) => { const s = Store.core.shop || (Store.core.shop = { checked: {}, extra: [] }); s.checked[el.dataset.k] = !s.checked[el.dataset.k]; Store.saveCore(); el.setAttribute('aria-pressed', !!s.checked[el.dataset.k]); clearTimeout(A._st); A._st = setTimeout(() => { if (ui.tab === 'cardapio') { const y = window.scrollY; App.render(); window.scrollTo(0, y); } }, 700); },
+  'shop-edit': (el) => shopEditOpen(el.dataset.k),
+  'shop-back': (el) => { delete shopS().have[el.dataset.k]; Store.saveCore(); App.render(); },
+  'se-reset': () => { delete shopS().qty[SE.k]; Store.saveCore(); Sheet.close(true); App.render(); },
+  'se-save': () => {
+    const s = shopS(), q = ($('#se-q')?.value || '').trim(), ex = s.extra.find((x) => x.id === SE.k);
+    if (ex) { const n = ($('#se-n')?.value || '').trim(); if (n) ex.n = n; if (q) ex.q = q; else delete ex.q; }
+    else { const it = shoppingList(Store.core.plan).find((x) => x.key === SE.k); if (q && it && q !== it.buy) s.qty[SE.k] = q; else delete s.qty[SE.k]; }
+    Store.saveCore(); Sheet.close(true); App.render();
+  },
+  'se-have': () => {
+    const s = shopS(), k = SE.k; s.have[k] = true; delete s.checked[k]; Store.saveCore(); Sheet.close(true); App.render();
+    App.toast('Movido para "Já tenho em casa"', () => { delete shopS().have[k]; Store.saveCore(); App.render(); });
+  },
+  'se-del': () => {
+    const s = shopS(), i = s.extra.findIndex((x) => x.id === SE.k); if (i < 0) return;
+    const [rm] = s.extra.splice(i, 1); Store.saveCore(); Sheet.close(true); App.render();
+    App.toast('Item removido da lista', () => { shopS().extra.splice(i, 0, rm); Store.saveCore(); App.render(); });
+  },
   'shop-clear': () => { Store.core.shop.checked = {}; Store.saveCore(); App.render(); },
   'shop-add': () => { const i = $('#shop-extra'), v = (i.value || '').trim(); if (!v) return; const s = Store.core.shop || (Store.core.shop = { checked: {}, extra: [] }); s.extra = [...(s.extra || []), { id: 'e_' + uid(), n: v }]; Store.saveCore(); App.render(); setTimeout(() => { const n = $('#shop-extra'); if (n) n.focus(); }, 20); },
   'shop-del': (el) => { Store.core.shop.extra = Store.core.shop.extra.filter((x) => x.id !== el.dataset.id); Store.saveCore(); App.render(); },
@@ -2721,7 +2827,7 @@ document.addEventListener('keydown', (ev) => {
   if (ev.key === 'Escape' && Sheet.isOpen()) { Sheet.close(); return; }
   if (ev.key === 'Enter') {
     const id = ev.target.id;
-    if (id === 'shop-extra') A['shop-add'](); else if (id === 'habit-new') A['habit-add']();
+    if (id === 'shop-extra') A['shop-add'](); else if (id === 'se-q' || id === 'se-n') A['se-save'](); else if (id === 'habit-new') A['habit-add']();
     else if (ev.target.dataset.in === 'fe-qty') A['fp-add']();
     else if (ev.target.dataset.in === 'fp-q') { const first = document.querySelector('#fp-results [data-a="fp-pick"]'); if (first && FP.q) first.click(); }
   }
