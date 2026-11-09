@@ -167,9 +167,9 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 .dial .band-over{stroke:var(--tomato);opacity:.55}
 .dial .band-bg{stroke:var(--line-2)}
 .dial .rim{fill:none;stroke:var(--line);stroke-width:1.5}
-.needle{transform-origin:180px 180px;transition:transform 1.1s cubic-bezier(.25,1.4,.4,1)}
+.needle{transform-origin:180px 168px;transition:transform 1.1s cubic-bezier(.25,1.4,.4,1)}
 @media (prefers-reduced-motion: reduce){.needle,.bar>span{transition:none}}
-.dial-read{position:absolute;left:0;right:0;top:67%;text-align:center}
+.dial-read{position:absolute;left:0;right:0;top:60%;transform:translateY(-50%);text-align:center;pointer-events:none}
 .dial-read .big{font-family:var(--display);font-weight:800;font-size:clamp(34px,10vw,44px);line-height:1;letter-spacing:-.03em}
 .dial-read .big.over{color:var(--tomato)}
 .dial-read small{display:block;font-size:13px;color:var(--muted);font-weight:600;margin-top:2px}
@@ -205,6 +205,17 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 .planned .pl-actions{display:flex;gap:8px;flex-wrap:wrap}
 
 .side{display:grid;gap:16px}
+.side .panel + .panel{margin-top:0}
+.fold{padding:0}
+.fold-h{display:flex;align-items:center;gap:10px;width:100%;padding:16px 18px;text-align:left;border-radius:inherit;margin:0}
+.fold-h:hover{background:var(--surface-2)}
+.fold-h h2{flex:1;margin:0}
+.fold-h .sub{font-weight:700;color:var(--ink);white-space:nowrap}
+.fold-h .chev{color:var(--muted);transition:transform .2s;display:grid}
+.fold.open .fold-h .chev{transform:rotate(180deg)}
+.fold-b{padding:0 18px 18px}
+.fold:not(.open) .fold-b{display:none}
+@media (prefers-reduced-motion: reduce){.fold-h .chev{transition:none}}
 .water-cups{display:flex;gap:5px;flex-wrap:wrap;margin:6px 0 12px}
 .cup{width:22px;height:30px;border-radius:4px 4px 7px 7px;border:2px solid var(--water);opacity:.35;position:relative;overflow:hidden}
 .cup.on{opacity:1}
@@ -528,6 +539,7 @@ const FOODS = [
   F('bolo_simples', 'Bolo caseiro simples', 'gorduras', 320, 5.5, 52.0, 10.0, [['fatia', 60]]),
   F('sorvete', 'Sorvete de massa', 'gorduras', 207, 3.5, 24.0, 11.0, [['bola', 60]]),
   F('pudim', 'Pudim de leite', 'gorduras', 290, 6.0, 46.0, 9.0, [['fatia', 100]]),
+  F('gelatina_diet', 'Gelatina diet (pronta)', 'gorduras', 14, 1.1, 2.3, 0.0, [['potinho (¼ da caixa)', 125], ['caixa inteira', 500]]),
 
   // ---------- Pratos prontos e lanches
   F('pizza', 'Pizza de mussarela', 'pratos', 270, 11.0, 30.0, 11.5, [['fatia', 110]]),
@@ -1468,10 +1480,9 @@ function dial(d) {
       ${ticks}
       <line x1="${mx.toFixed(1)}" y1="${my.toFixed(1)}" x2="${mx2.toFixed(1)}" y2="${my2.toFixed(1)}" stroke="var(--ink)" stroke-width="3.5" stroke-linecap="round"/>
       <g class="needle" data-to="${rot.toFixed(2)}" style="transform:rotate(${(ui.needle ?? -120)}deg)">
-        <path d="M${cx - 5} ${cy} L${cx} ${cy - R + 30} L${cx + 5} ${cy} Z" fill="var(--carrot)"/>
+        <path d="M${cx - 5} ${cy - R + 40} L${cx} ${cy - R + 6} L${cx + 5} ${cy - R + 40} Z" fill="var(--carrot)" stroke="var(--carrot)" stroke-width="2.5" stroke-linejoin="round"/>
+        <circle cx="${cx}" cy="${cy - R + 40}" r="5" fill="var(--carrot)"/>
       </g>
-      <circle cx="${cx}" cy="${cy}" r="11" fill="var(--surface)" stroke="var(--ink)" stroke-width="3"/>
-      <circle cx="${cx}" cy="${cy}" r="3.5" fill="var(--carrot)"/>
     </svg>
     <div class="dial-read">
       <div class="big num ${over ? 'over' : ''}">${fmt(Math.abs(rem))}</div>
@@ -1481,6 +1492,47 @@ function dial(d) {
 }
 
 /* ===================== HOJE ===================== */
+// Painel recolhível da lateral; o estado aberto/fechado fica salvo neste aparelho
+const FOLD_KEY = 'biotrack:paineis';
+const FOLD_DEFAULT = { agua: true };
+const Folds = {
+  s: (() => { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } })(),
+  isOpen(id) { return id in this.s ? this.s[id] : !!FOLD_DEFAULT[id]; },
+  toggle(id) { this.s[id] = !this.isOpen(id); try { localStorage.setItem(FOLD_KEY, JSON.stringify(this.s)); } catch (e) {} return this.s[id]; },
+};
+function fold(id, title, summary, body) {
+  const open = Folds.isOpen(id);
+  return `<section class="panel fold ${open ? 'open' : ''}" data-fold="${id}">
+    <button class="ph fold-h" data-a="fold" data-id="${id}" aria-expanded="${open}" aria-controls="fold-${id}">
+      <h2>${title}</h2><span class="sub num">${summary}</span><span class="chev">${ic('down', 'sm')}</span>
+    </button>
+    <div class="fold-b" id="fold-${id}">${body}</div>
+  </section>`;
+}
+// Projeção linear do peso a partir do saldo do dia (7.700 kcal ≈ 1 kg)
+function weightForecast(d, isToday) {
+  const g = Store.p.goalWeight, w = d.weight, perDay = d.balance / Calc.KCAL_KG;
+  const kg = (v) => `${fmt(v, 1)} kg`;
+  const delta = (v) => `${v > 0 ? '+' : v < 0 ? '−' : ''}${fmt(Math.abs(v), Math.abs(v) < 1 ? 2 : 1)} kg`;
+  const col = (v) => (v <= 0 ? 'var(--kale)' : 'var(--tomato)');
+  const row = (lbl, days) => { const ch = perDay * days; return `<div class="kv"><span>${lbl}</span><b class="num">${kg(w + ch)} <small style="color:${col(ch)};font-weight:700">${delta(ch)}</small></b></div>`; };
+  let goal = '';
+  if (g && w > g && perDay < 0) {
+    const days = Math.round((w - g) / -perDay);
+    goal = `<div class="kv total"><span>Meta de ${kg(g)}</span><b class="num">${days > 730 ? 'mais de 2 anos' : (() => { const dd = addDays(d.date, days); return dShort(dd) + (dd.slice(0, 4) !== d.date.slice(0, 4) ? ' ' + dd.slice(0, 4) : ''); })()}</b></div>`;
+  } else if (g && w <= g) goal = `<div class="kv total"><span>Meta de ${kg(g)}</span><b class="num" style="color:var(--kale)">atingida</b></div>`;
+  const early = isToday && d.intake < d.plan.target * 0.6;
+  const wk = perDay * 7;
+  const head = early ? `<span style="color:var(--muted)">plano ${d.plan.weekly > 0 ? '−' + fmt(d.plan.weekly, 2) + ' kg/sem' : 'manutenção'}</span>` : `<span style="color:${col(wk)}">${delta(wk)}/sem</span>`;
+  return fold('peso', 'Estimativa de peso', head, `
+    <p class="muted" style="font-size:13px;margin:0 0 4px">Se todo dia for assim:</p>
+    <div class="kv"><span>Peso atual</span><b class="num">${kg(w)}</b></div>
+    ${row(isToday ? 'Fim de hoje' : 'Fim do dia', 1)}
+    ${row('Em 1 semana', 7)}
+    ${row('Em 1 mês', 30)}
+    ${goal}
+    <p class="muted mt8" style="font-size:13px">${early ? `<b>O dia ainda não fechou.</b> Com ${fmt(d.intake)} kcal registradas, o saldo vai cair conforme você anotar as refeições. Comendo a meta, o plano dá ${d.plan.weekly > 0 ? '−' + fmt(d.plan.weekly, 2) + ' kg/semana' : 'manutenção'}. ` : ''}Conta linear (7.700 kcal ≈ 1 kg de gordura): na balança o peso oscila com água, e o ritmo tende a desacelerar com o tempo.</p>`);
+}
 function viewHoje() {
   const d = computeDay(ui.date), p = Store.p, isToday = ui.date === todayISO();
   const { meals } = settings();
@@ -1527,7 +1579,7 @@ function viewHoje() {
         <div class="dial-stats">
           <div><b class="num">${fmt(d.intake)}</b><span>consumido</span></div>
           <div><b class="num">${d.exercise ? '+' + fmt(d.exercise) : '0'}</b><span>exercício</span></div>
-          <div><b class="num" style="color:${deficit >= 0 ? 'var(--kale)' : 'var(--tomato)'}">${deficit >= 0 ? '−' : '+'}${fmt(Math.abs(d.balance))}</b><span>saldo do dia</span></div>
+          <div><b class="num" style="color:${deficit >= 0 ? 'var(--kale)' : 'var(--tomato)'}">${deficit >= 0 ? '−' : '+'}${fmt(Math.abs(d.balance))}</b><span>${isToday ? 'saldo previsto' : 'saldo do dia'}</span></div>
         </div>
         ${macroBars(d)}
       </section>
@@ -1535,33 +1587,27 @@ function viewHoje() {
       ${!shown.length ? '' : `<div class="row mt12 wrap gap6">${MEALS.filter((m) => !shown.includes(m)).map((m) => `<button class="chip" data-a="fp-open" data-meal="${m.id}">${ic('plus', 'sm')} ${m.label}</button>`).join('')}</div>`}
     </div>
     <div class="side">
-      <section class="panel">
-        <div class="ph"><h2>Água</h2><span class="sub num">${fmt(water)} / ${fmt(d.water)} ml</span></div>
+      ${fold('agua', 'Água', `${fmt(water)} / ${fmt(d.water)} ml`, `
         <div class="water-cups" aria-hidden="true">${Array.from({ length: cups }, (_, i) => { const f = water / 250 - i; return `<span class="cup ${f >= 1 ? 'on' : f >= 0.5 ? 'half' : ''}"></span>`; }).join('')}</div>
         <div class="row">
           <button class="btn btn-soft btn-sm grow" data-a="water" data-v="250">${ic('drop', 'sm')} +250 ml</button>
           <button class="btn btn-soft btn-sm grow" data-a="water" data-v="500">+500 ml</button>
           <button class="icon-btn" data-a="water" data-v="-250" aria-label="Tirar 250 ml">${ic('minus')}</button>
-        </div>
-      </section>
-      <section class="panel">
-        <div class="ph"><h2>Hábitos do dia</h2><span class="sub num">${doneH}/${habits.length}</span></div>
-        ${habits.length ? habits.map((h) => `<button class="habit" data-a="habit" data-id="${h.id}" aria-pressed="${!!d.day.habits[h.id]}"><span class="box">${ic('check', 'sm')}</span><span class="hl">${esc(h.n)}</span></button>`).join('') : '<p class="muted">Cadastre hábitos no Perfil.</p>'}
-      </section>
-      <section class="panel">
-        <div class="ph"><h2>Atividade</h2><button class="btn btn-soft btn-sm" data-a="ex-open">${ic('plus', 'sm')} Exercício</button></div>
+        </div>`)}
+      ${fold('habitos', 'Hábitos do dia', `${doneH}/${habits.length}`, `
+        ${habits.length ? habits.map((h) => `<button class="habit" data-a="habit" data-id="${h.id}" aria-pressed="${!!d.day.habits[h.id]}"><span class="box">${ic('check', 'sm')}</span><span class="hl">${esc(h.n)}</span></button>`).join('') : '<p class="muted">Cadastre hábitos no Perfil.</p>'}`)}
+      ${fold('atividade', 'Atividade', d.exercise ? `+${fmt(d.exercise)} kcal` : 'nenhuma', `
         ${d.day.ex.length ? d.day.ex.map((e) => `<div class="kv"><span>${esc(e.n)} · ${fmt(e.min)} min</span><b class="num">+${fmt(e.kcal)} kcal <button class="icon-btn sm" data-a="ex-del" data-id="${e.id}" aria-label="Remover">${ic('x', 'sm')}</button></b></div>`).join('') : '<p class="muted">Nenhum exercício. Gasto conta só a rotina.</p>'}
-      </section>
-      <section class="panel">
-        <div class="ph"><h2>Balanço do dia</h2><span class="sub">estimativa</span></div>
+        <button class="btn btn-soft btn-sm mt12" data-a="ex-open">${ic('plus', 'sm')} Exercício</button>`)}
+      ${fold('balanco', 'Balanço do dia', `<span style="color:${deficit >= 0 ? 'var(--kale)' : 'var(--tomato)'}">${deficit >= 0 ? '−' : '+'}${fmt(Math.abs(d.balance))} kcal</span>`, `
         <div class="kv"><span>Metabolismo basal</span><b class="num">${fmt(d.bmr)} kcal</b></div>
         <div class="kv"><span>Rotina (${ACTIVITY[p.activity]?.label.toLowerCase()})</span><b class="num">${fmt(d.neat)} kcal</b></div>
         <div class="kv"><span>Digestão dos alimentos</span><b class="num">${fmt(d.tef)} kcal</b></div>
         <div class="kv"><span>Exercício</span><b class="num">${fmt(d.exercise)} kcal</b></div>
         <div class="kv total"><span>Gasto total</span><b class="num">${fmt(d.spent)} kcal</b></div>
         <div class="kv total"><span>${deficit >= 0 ? 'Déficit' : 'Excedente'}</span><b class="num" style="color:${deficit >= 0 ? 'var(--kale)' : 'var(--tomato)'}">${fmt(Math.abs(d.balance))} kcal</b></div>
-        ${d.intake > 0 && deficit > 0 ? `<p class="muted mt8" style="font-size:13.5px">Equivale a cerca de <b>${fmt((deficit / 7700) * 1000)} g de gordura</b> se o dia fechar assim.</p>` : ''}
-      </section>
+        ${d.intake > 0 && deficit > 0 ? `<p class="muted mt8" style="font-size:13.5px">Equivale a cerca de <b>${fmt((deficit / 7700) * 1000)} g de gordura</b> se o dia fechar assim.</p>` : ''}`)}
+      ${weightForecast(d, isToday)}
     </div>
   </div>`;
 }
@@ -1840,7 +1886,7 @@ function viewOnboarding() {
     <p class="lead">Preenchi com os dados do seu app antigo. Confira e ajuste o que mudou.</p>
     <div class="panel">
       <div class="grid2">
-        ${f('name', 'Nome', 'Henrique', 'inputmode="text" maxlength="40"')}
+        ${f('name', 'Nome', 'João', 'inputmode="text" maxlength="40"')}
         <label class="field"><span>Sexo biológico</span><select class="input" id="ob-sex"><option value="M" selected>Masculino</option><option value="F">Feminino</option></select></label>
         ${f('age', 'Idade', 32, 'inputmode="numeric"')}
         ${f('height', 'Altura (cm)', 169, 'inputmode="numeric"')}
@@ -2655,6 +2701,10 @@ function onProfileChange(el) {
 }
 
 /* ===================== EVENTOS ===================== */
+A.fold = (el) => {
+  const open = Folds.toggle(el.dataset.id), box = el.closest('.fold');
+  box.classList.toggle('open', open); el.setAttribute('aria-expanded', String(open));
+};
 document.addEventListener('click', (ev) => {
   if (ev.target.matches('[data-scrim]')) { Sheet.close(); return; }
   const el = ev.target.closest('[data-a]'); if (!el || el.disabled) return;
