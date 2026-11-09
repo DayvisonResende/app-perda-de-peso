@@ -2,7 +2,7 @@
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <title>BioTrack — dieta, cardápio e progresso</title>
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232E6A4E'/%3E%3Cg transform='translate%284 4%29' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='13' r='8'/%3E%3Cpath d='M12 13l3-3M9 3h6'/%3E%3C/g%3E%3C/svg%3E">
 <meta name="theme-color" content="#2E6A4E">
@@ -59,7 +59,7 @@
 }
 *,*::before,*::after{box-sizing:inherit}
 [hidden]{display:none!important}
-html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%}
+html{scroll-padding-top:env(safe-area-inset-top,0px);-webkit-text-size-adjust:100%;touch-action:pan-x pan-y}
 body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--body);font-size:15px;line-height:1.5;-webkit-tap-highlight-color:transparent;min-height:100%}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:40;background:var(--paper)}
 button,input,select,textarea{font:inherit;color:inherit}
@@ -160,7 +160,7 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 /* ---------- date nav */
 .datenav{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:3px}
 .datenav .lbl{position:relative;min-width:112px;text-align:center;font-weight:800;font-size:14px;padding:0 6px}
-.datenav input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.datenav input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;font-size:16px}
 
 /* ---------- today */
 .today{display:grid;gap:16px}
@@ -2906,6 +2906,10 @@ A['pwa-install'] = async () => {
     <div class="sheet-f"><button class="btn btn-primary grow" data-a="sheet-close">Entendi</button></div>` });
 };
 PWA.init();
+
+// Sem zoom: o iPhone ignora user-scalable=no, então bloqueia o gesto de pinça aqui
+['gesturestart', 'gesturechange', 'gestureend'].forEach((t) => document.addEventListener(t, (e) => e.preventDefault(), { passive: false }));
+document.addEventListener('touchmove', (e) => { if (e.touches.length > 1 || (e.scale && e.scale !== 1)) e.preventDefault(); }, { passive: false });
 
 App.init();
 </script>
