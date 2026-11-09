@@ -4,6 +4,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>BioTrack — dieta, cardápio e progresso</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%232E6A4E'/%3E%3Cg transform='translate%284 4%29' fill='none' stroke='%23fff' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='13' r='8'/%3E%3Cpath d='M12 13l3-3M9 3h6'/%3E%3C/g%3E%3C/svg%3E">
+<meta name="theme-color" content="#2E6A4E">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="BioTrack">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,650;12..96,800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -1932,6 +1940,7 @@ function viewPerfil() {
         <div class="ph"><h2>Aparência</h2></div>
         <div class="seg">${[['auto', 'Automático'], ['light', 'Claro'], ['dark', 'Escuro']].map(([k, l]) => `<button data-a="pf-theme" data-v="${k}" aria-pressed="${(p.theme || 'auto') === k}">${l}</button>`).join('')}</div>
       </section>
+      ${PWA.panel()}
       <section class="panel">
         <div class="ph"><h2>Seus dados</h2><span class="sync" data-s="${Sync.status}"><span class="dot"></span><span>${syncText()}</span></span></div>
         <p class="muted" style="font-size:13.5px">${Sync.status === 'synced' ? 'Tudo fica salvo na sua conta e aparece igual no celular e no computador.' : 'Os dados ficam salvos neste aparelho. Faça backup de vez em quando.'}</p>
@@ -2491,6 +2500,14 @@ async function doExport() {
     const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
     if (dl) { await dl.save({ filename: name, data }); App.toast('Backup salvo'); return; }
   } catch (e) { if (e && e.code && e.code !== 'unavailable') { App.toast('Download cancelado'); return; } }
+  try {
+    // navegador comum: baixa como arquivo .json
+    const url = URL.createObjectURL(new Blob([data], { type: 'application/json' }));
+    const a = document.createElement('a'); a.href = url; a.download = name; a.style.display = 'none';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 4000);
+    App.toast(`Backup salvo: ${name}`); return;
+  } catch (e) {}
   textOpen('Backup', 'Copie e guarde este texto num lugar seguro', data);
 }
 function importOpen() {
@@ -2832,6 +2849,36 @@ document.addEventListener('keydown', (ev) => {
     else if (ev.target.dataset.in === 'fp-q') { const first = document.querySelector('#fp-results [data-a="fp-pick"]'); if (first && FP.q) first.click(); }
   }
 });
+
+/* ===================== PWA (instalar e usar offline) ===================== */
+const PWA = {
+  prompt: null,
+  installed: () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+  isIOS: () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1),
+  canRegister: () => 'serviceWorker' in navigator && (location.protocol === 'https:' || ['localhost', '127.0.0.1'].includes(location.hostname)),
+  init() {
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); this.prompt = e; if (ui.tab === 'perfil') App.render(); });
+    window.addEventListener('appinstalled', () => { this.prompt = null; App.toast('BioTrack instalado'); if (ui.tab === 'perfil') App.render(); });
+    if (this.canRegister()) window.addEventListener('load', () => { navigator.serviceWorker.register('sw.js').catch(() => {}); });
+  },
+  panel() {
+    if (this.installed() || !this.canRegister()) return '';
+    const body = this.prompt
+      ? `<p class="muted" style="font-size:13.5px">Instale o BioTrack para abrir direto da tela inicial, em tela cheia, e usar mesmo sem internet.</p>
+         <button class="btn btn-primary btn-sm mt12" data-a="pwa-install">${ic('download', 'sm')} Instalar app</button>`
+      : this.isIOS()
+        ? `<p class="muted" style="font-size:13.5px">No iPhone: abra no Safari, toque em <b>Compartilhar</b> e depois em <b>Adicionar à Tela de Início</b>.</p>`
+        : `<p class="muted" style="font-size:13.5px">Use o menu do navegador e escolha <b>Instalar app</b> ou <b>Adicionar à tela inicial</b>. Depois disso o BioTrack abre em tela cheia e funciona sem internet.</p>`;
+    return `<section class="panel"><div class="ph"><h2>Instalar no aparelho</h2></div>${body}</section>`;
+  },
+};
+A['pwa-install'] = async () => {
+  if (!PWA.prompt) return;
+  PWA.prompt.prompt();
+  const { outcome } = await PWA.prompt.userChoice.catch(() => ({}));
+  PWA.prompt = null; if (outcome !== 'accepted') App.render();
+};
+PWA.init();
 
 App.init();
 </script>
