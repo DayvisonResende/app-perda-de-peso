@@ -68,6 +68,11 @@ const ANIM = {
   hang: { pr: [['bar', 118, 14], 'floor'], hold: 1, f: [hangT([118, 14], 0, { f: [97, 104], kb: 1 }), hangT([118, 14], 1, { f: [96, 103], kb: 1 })] },
   hang_escap: { pr: [['bar', 118, 14], 'floor'], f: [hangT([118, 14], -2, { f: [97, 106], kb: 1 }), hangT([118, 14], 5, { f: [97, 99], kb: 1 })] },
   row: { pr: [['bar', 124, 78], 'floor'], f: [plank([40, 117], 4, [124, 78], { eb: 1 }), plank([40, 117], 24.9, [124, 78], { eb: 1 })] },
+  // costas sem equipamento
+  prone_hover: { pr: ['floor'], f: [{ p: [80, 113], t: 5, h: [127, 104], f: [32, 115], eb: -1 }, { p: [80, 113], t: 9, h: [90, 104], f: [32, 115], eb: 1 }] },
+  escap_canto: { pr: ['floor', ['wall', 34]], f: [plank([98, 117], 113, [44, 38], { eb: 1 }), plank([98, 117], 104, [44, 34], { eb: 1 })] },
+  back_widow: { pr: ['floor'], f: [{ p: [92, 113], t: 180, h: [64, 98], f: [124, 117], kb: -1, eb: 1 }, { p: [92, 113], t: 160, h: [68, 88], f: [124, 117], kb: -1, eb: 1 }] },
+  row_porta: { pr: ['floor', ['wall', 141]], rope: [141, 30], f: [plank([136, 117], 116, [118, 47], { eb: 1 }), plank([136, 117], 101, [131, 40], { eb: 1 })] },
   row_alta: { pr: [['bar', 112, 60], 'floor'], f: [plank([40, 117], 18, [112, 60]), plank([40, 117], 38.4, [112, 60])] },
   row_pes: { pr: [['bar', 122, 52], 'floor', ['box', 22, 32, 96]], f: [plank([40, 95], 8, [122, 52]), plank([40, 95], 27.7, [122, 52])] },
   // pernas
@@ -101,7 +106,7 @@ const ANIM = {
 const STEP_ANIM = {
   flex_parede: 'flex_parede', flex_inclinada: 'flex_inc', flex_joelhos: 'flex_joelhos', flex: 'flex', flex_diamante: 'flex', flex_pes_elev: 'flex_pes', flex_arqueiro: 'flex', flex_pseudo: 'flex_pseudo', flex_1braco_inc: 'flex_inc', flex_1braco: 'flex',
   pendurar: 'hang', barra_escap: 'hang_escap', barra_negativa: 'pull_neg', chinup: 'pull', pullup: 'pull', pullup_aberta: 'pull', pullup_L: 'pull_L', pullup_arqueiro: 'pull', pullup_1braco_neg: 'pull_neg',
-  remada_alta: 'row_alta', remada: 'row', remada_pes: 'row_pes', remada_arqueiro: 'row', remada_1braco: 'row',
+  prone_hover: 'prone_hover', escap_canto: 'escap_canto', back_widow: 'back_widow', remada_batente: 'row_porta', remada_toalha: 'row_porta', remada_toalha_1: 'row_porta', remada_alta: 'row_alta', remada: 'row', remada_pes: 'row_pes', remada_arqueiro: 'row', remada_1braco: 'row',
   merg_banco: 'banco', merg_banco_reto: 'banco_reto', par_suporte: 'dip_suporte', par_negativa: 'dip', paralela: 'dip', par_funda: 'dip_fundo',
   pike: 'pike', pike_elev: 'pike_elev', wall_walk: 'wall_walk', parada_parede: 'hs_costas', hspu_parcial: 'hspu_parc', hspu: 'hspu',
   agach_cadeira: 'squat_cad', agach: 'squat', afundo: 'lunge', bulgaro: 'bulgaro', pistol_cadeira: 'pistol_cad', pistol: 'pistol',
@@ -124,7 +129,8 @@ function exAnim(sid, cls = '') {
     const line = (keys, c) => `<polyline class="${c}" points="${pts(fr[seq[0]], keys)}">${anim(keys)}</polyline>`;
     const head = `<circle class="ax-head" r="6.5" cx="${fr[seq[0]].H[0].toFixed(1)}" cy="${fr[seq[0]].H[1].toFixed(1)}">${['cx', 'cy'].map((at, j) => `<animate attributeName="${at}" dur="${dur}s" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines="${ks}" values="${seq.map((i) => fr[i].H[j].toFixed(1)).join(';')}"/>`).join('')}</circle>`;
     const props = a.pr.map((p) => (typeof p === 'string' ? PROPS[p] : PROPS[p[0]](...p.slice(1)))).join('');
-    _axCache[key] = `${props}${line(['P', 'K2', 'A2'], 'ax-back')}${line(['S', 'E2', 'W2'], 'ax-back')}${line(['S', 'P', 'K', 'A'], 'ax-ln')}${line(['S', 'E', 'W'], 'ax-ln')}${head}`;
+    const rope = a.rope ? `<polyline class="ax-rope" points="${a.rope.join(',')} ${fr[seq[0]].W.map((n) => n.toFixed(1)).join(',')}"><animate attributeName="points" dur="${dur}s" repeatCount="indefinite" calcMode="spline" keyTimes="${kt}" keySplines="${ks}" values="${seq.map((i) => `${a.rope.join(',')} ${fr[i].W.map((n) => n.toFixed(1)).join(',')}`).join(';')}"/></polyline>` : '';
+    _axCache[key] = `${props}${rope}${line(['P', 'K2', 'A2'], 'ax-back')}${line(['S', 'E2', 'W2'], 'ax-back')}${line(['S', 'P', 'K', 'A'], 'ax-ln')}${line(['S', 'E', 'W'], 'ax-ln')}${head}`;
   }
   return `<svg class="ax ${cls}" viewBox="0 0 200 130" role="img" aria-label="Animação do exercício">${_axCache[key]}</svg>`;
 }
