@@ -1,0 +1,62 @@
+# Brius — testa e publica no GitHub Pages.
+# · Pull Request ou push em qualquer branch: roda os testes.
+# · Push na main: se os testes passarem, publica dist/ no GitHub Pages.
+# Para funcionar: Settings → Pages → Source: "GitHub Actions".
+name: Testar e publicar
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: brius-${{ github.ref }}
+  cancel-in-progress: ${{ github.ref != 'refs/heads/main' }}
+
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Instalar o Chromium do Playwright
+        run: npx playwright install --with-deps chromium
+      - name: Montar e testar
+        run: npm test
+        env:
+          PW_CHANNEL: chromium
+          CI: true
+      - name: Guardar o relatório se algo falhar
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: resultados-dos-testes
+          path: test-results/
+          retention-days: 7
+      - name: Guardar o app montado
+        if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+  publicar:
+    needs: testes
+    if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - id: deploy
+        uses: actions/deploy-pages@v4
