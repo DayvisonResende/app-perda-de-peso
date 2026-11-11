@@ -1,0 +1,5 @@
+/* ---------- date nav */
+.datenav{display:inline-flex;align-items:center;gap:2px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:3px}
+.datenav .lbl{position:relative;min-width:112px;text-align:center;font-weight:800;font-size:14px;padding:0 6px}
+.datenav input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;font-size:16px}
+

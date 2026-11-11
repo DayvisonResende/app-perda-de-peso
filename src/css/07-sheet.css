@@ -1,0 +1,16 @@
+/* ---------- sheet */
+.scrim{position:fixed;inset:0;z-index:60;background:rgba(10,18,14,.42);display:flex;align-items:flex-end;justify-content:center;animation:fade .18s ease}
+.sheet{background:var(--surface);width:100%;max-width:640px;max-height:92vh;max-height:92dvh;border-radius:24px 24px 0 0;display:flex;flex-direction:column;box-shadow:0 -10px 40px rgba(0,0,0,.25);animation:up .26s cubic-bezier(.2,.9,.25,1);padding-bottom:env(safe-area-inset-bottom,0px)}
+.sheet.tall{height:92vh;height:92dvh}
+.sheet-h{display:flex;align-items:center;gap:8px;padding:14px 14px 8px 18px}
+.sheet-h .t{flex:1;min-width:0}
+.sheet-h .t b{font-family:var(--display);font-size:19px;font-weight:650;display:block}
+.sheet-h .t small{color:var(--muted);font-size:13px}
+.sheet-b{padding:4px 18px 16px;overflow-y:auto;flex:1;overscroll-behavior:contain}
+.sheet-f{padding:12px 18px 16px;border-top:1px solid var(--line);display:flex;gap:10px}
+@media (min-width:720px){
+  .scrim{align-items:center;padding:24px}
+  .sheet{border-radius:24px;max-height:88vh;padding-bottom:0}
+  .sheet.tall{height:min(820px,88vh)}
+}
+@keyframes up{from{transform:translateY(40px);opacity:.4}to{transform:none;opacity:1}}
