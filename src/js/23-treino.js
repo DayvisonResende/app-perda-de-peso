@@ -26,11 +26,19 @@ const CAL = [
     ['pullup_1braco_neg', 'Barra de um braço negativa', 'r', 1, 4, 'Suba com os dois braços, solte um e desça em 5 s.', 'barra', 1],
   ] },
   { id: 'remada', n: 'Remada', pat: 'Puxar (horizontal)', steps: [
-    ['remada_alta', 'Remada inclinada alta', 'r', 8, 15, 'Barra baixa ou mesa firme na altura do peito; corpo bem inclinado.'],
-    ['remada', 'Remada australiana', 'r', 6, 15, 'Embaixo da barra/mesa, corpo reto, puxe o peito até ela.'],
-    ['remada_pes', 'Remada com pés elevados', 'r', 6, 12, 'Pés numa cadeira, corpo paralelo ao chão.'],
-    ['remada_arqueiro', 'Remada arqueiro', 'r', 4, 10, 'Puxe para um lado; o outro braço vai quase esticado.', '', 1],
-    ['remada_1braco', 'Remada de um braço', 'r', 3, 8, 'Pés afastados para não girar. Peito sobe reto.', '', 1],
+    // sem nada: costas no chão e no canto da parede (Contreras: prone hover e encolhimento escapular no canto)
+    ['prone_hover', 'Prone hover (costas no chão)', 'r', 8, 15, 'De bruços, mãos na nuca e peito um pouco fora do chão. Abra os braços em T e desça as mãos até as costas, apertando as escápulas.'],
+    ['escap_canto', 'Encolhimento escapular no canto', 'r', 8, 15, 'De costas para um canto da parede, braços apoiados nas duas paredes, pés à frente. Afaste o corpo da parede só apertando as escápulas. Pés mais longe = mais difícil.'],
+    ['back_widow', 'Back widow (cotovelos no chão)', 'r', 8, 15, 'Deitado de costas, joelhos dobrados, cotovelos no chão ao lado do corpo. Empurre os cotovelos e tire as costas do chão; segure 1 s em cima.'],
+    // com porta firme: batente e toalha (Contreras: lençol por cima de uma porta trancada)
+    ['remada_batente', 'Remada no batente da porta', 'r', 8, 15, 'Segure o batente com as duas mãos e os pés perto dele; incline para trás com o corpo reto e puxe o peito até o batente.', 'porta'],
+    ['remada_toalha', 'Remada com toalha na porta', 'r', 8, 15, 'Lençol ou toalha por cima de uma porta trancada, com um nó grosso do outro lado e a porta fechando na direção em que você puxa. Pés mais à frente = mais difícil.', 'porta'],
+    ['remada_alta', 'Remada inclinada alta', 'r', 8, 15, 'Barra baixa ou mesa firme na altura do peito; corpo bem inclinado.', 'mesa'],
+    ['remada_toalha_1', 'Remada com toalha de um braço', 'r', 5, 12, 'Mesma montagem da toalha na porta, puxando com um braço só. Não deixe o corpo girar.', 'porta', 1],
+    ['remada', 'Remada australiana', 'r', 6, 15, 'Embaixo da barra/mesa, corpo reto, puxe o peito até ela.', 'mesa'],
+    ['remada_pes', 'Remada com pés elevados', 'r', 6, 12, 'Pés numa cadeira, corpo paralelo ao chão.', 'mesa'],
+    ['remada_arqueiro', 'Remada arqueiro', 'r', 4, 10, 'Puxe para um lado; o outro braço vai quase esticado.', 'mesa', 1],
+    ['remada_1braco', 'Remada de um braço', 'r', 3, 8, 'Pés afastados para não girar. Peito sobe reto.', 'mesa', 1],
   ] },
   { id: 'paralela', n: 'Paralela', pat: 'Empurrar (mergulho)', steps: [
     ['merg_banco', 'Mergulho no banco, joelhos dobrados', 'r', 8, 15, 'Mãos na cadeira atrás de você; desça até ~90° no cotovelo.'],
@@ -135,9 +143,9 @@ CAL.forEach((f) => f.steps.forEach((x) => { x.fase = f.skill ? 3 : STEP_FASE[x.i
 // metas de cada fase: [rótulo, [[nível, alvo], alternativa sem equipamento…]]
 const PHASES = [
   { n: 'Fundamentos', d: 'Técnica limpa nos movimentos básicos. É a base de tudo que vem depois.', libera: 'flexão fechada e com pés elevados, barra aberta, paralelas, parada de mão na parede, búlgaro e L-sit',
-    goals: [['Flexões seguidas', [['flex', 20]]], ['Puxadas seguidas', [['pullup', 8], ['remada', 15]]], ['Mergulhos no banco', [['merg_banco_reto', 20]]], ['Agachamentos seguidos', [['agach', 25]]], ['Canoa', [['canoa', 30]]]] },
+    goals: [['Flexões seguidas', [['flex', 20]]], ['Puxadas seguidas', [['pullup', 8], ['remada', 15], ['remada_toalha', 20], ['back_widow', 15]]], ['Mergulhos no banco', [['merg_banco_reto', 20]]], ['Agachamentos seguidos', [['agach', 25]]], ['Canoa', [['canoa', 30]]]] },
   { n: 'Base sólida', d: 'Variações mais pesadas e os primeiros movimentos de equilíbrio.', libera: 'movimentos de um braço e de uma perna, nórdica, dragon flag e as habilidades: parada de mão livre, front lever e planche',
-    goals: [['Flexão fechada', [['flex_diamante', 15]]], ['Puxada pesada', [['pullup_aberta', 8], ['remada_pes', 12]]], ['Empurrar pesado', [['paralela', 12], ['flex_pes_elev', 15]]], ['Búlgaro (por lado)', [['bulgaro', 12]]], ['Parada de mão na parede', [['parada_parede', 30]]], ['L-sit grupado', [['lsit_grupado', 15]]]] },
+    goals: [['Flexão fechada', [['flex_diamante', 15]]], ['Puxada pesada', [['pullup_aberta', 8], ['remada_pes', 12], ['remada_toalha_1', 12], ['back_widow', 25]]], ['Empurrar pesado', [['paralela', 12], ['flex_pes_elev', 15]]], ['Búlgaro (por lado)', [['bulgaro', 12]]], ['Parada de mão na parede', [['parada_parede', 30]]], ['L-sit grupado', [['lsit_grupado', 15]]]] },
   { n: 'Habilidades', d: 'Movimentos avançados. Agora é especializar no que você mais quer dominar.', libera: '', goals: [] },
 ];
 const ATTRS = [['Empurrar', ['flexao', 'paralela', 'ombro']], ['Puxar', ['barra', 'remada']], ['Pernas', ['agach', 'posterior']], ['Core', ['core']], ['Habilidade', ['hs', 'fl', 'pl']]];
@@ -178,7 +186,7 @@ function _missions(date) {
 const Tr = {
   s() {
     const c = Store.core; c.treino = c.treino || { setup: false, dias: 3, eq: { barra: false, paralela: false }, skills: [], foco: 'emagrecer', fin: true, lvl: {}, logs: [], next: 0, cur: null };
-    const t = c.treino; t.logs ||= []; t.lvl ||= {}; t.eq ||= {}; t.eqCasa ||= {}; t.loc ||= 'rua'; t.skills ||= []; t.unl ||= {}; t.hits ||= {}; t.tests ||= {}; t.ups ||= []; t.phUps ||= [];
+    const t = c.treino; t.logs ||= []; t.lvl ||= {}; t.eq ||= {}; t.eqCasa ||= {}; if (t.eq.mesa === undefined) t.eq.mesa = true; if (t.eqCasa.mesa === undefined) t.eqCasa.mesa = false; if (t.eq.porta === undefined) t.eq.porta = false; if (t.eqCasa.porta === undefined) t.eqCasa.porta = false; t.loc ||= 'rua'; t.skills ||= []; t.unl ||= {}; t.hits ||= {}; t.tests ||= {}; t.ups ||= []; t.phUps ||= [];
     if (!t.fase) { // quem já usava o treino entra na fase dos níveis em que já está
       t.fase = 1; t.unl = { ...t.lvl };
       for (const f of CAL) { const st = t.lvl[f.id] && calStep(t.lvl[f.id]); if (st && !f.skill) t.fase = Math.max(t.fase, st.fase); }
@@ -527,10 +535,10 @@ function trSetupHTML() {
   <div class="sheet-b">
     ${q('dias', 'Quantos dias por semana?', [[2, '2 dias'], [3, '3 dias'], [4, '4 dias']])}
     <p class="faint mt8" style="font-size:12.5px">${TS.dias === 4 ? 'Superior e inferior alternados (2 de cada).' : 'Corpo inteiro, alternando treino A e B. Deixe 1 dia de descanso entre eles.'}</p>
-    <div class="field mt12"><span>Em casa você tem?</span><div class="chips">${ch('ts-eqc', 'barra', 1, 'Barra de porta', !!TS.eqCasa.barra)}${ch('ts-eqc', 'paralela', 1, '2 cadeiras firmes / paralelas', !!TS.eqCasa.paralela)}</div>
-      <small class="mtip">Mesa firme e cadeira já contam para remada e mergulho.</small></div>
-    <div class="field mt12"><span>Na rua / academia você tem?</span><div class="chips">${ch('ts-eq', 'barra', 1, 'Barra fixa', !!TS.eq.barra)}${ch('ts-eq', 'paralela', 1, 'Paralelas (ou 2 cadeiras firmes)', !!TS.eq.paralela)}</div>
-      <small class="mtip">Sem nada também funciona: as remadas usam uma mesa firme.</small></div>
+    <div class="field mt12"><span>Em casa você tem?</span><div class="chips">${ch('ts-eqc', 'barra', 1, 'Barra de porta', !!TS.eqCasa.barra)}${ch('ts-eqc', 'paralela', 1, '2 cadeiras firmes / paralelas', !!TS.eqCasa.paralela)}${ch('ts-eqc', 'porta', 1, 'Porta firme (para toalha)', !!TS.eqCasa.porta)}${ch('ts-eqc', 'mesa', 1, 'Mesa firme ou barra baixa', !!TS.eqCasa.mesa)}</div>
+      <small class="mtip">Sem nada disso, as remadas viram exercícios de costas no chão e no canto da parede.</small></div>
+    <div class="field mt12"><span>Na rua / academia você tem?</span><div class="chips">${ch('ts-eq', 'barra', 1, 'Barra fixa', !!TS.eq.barra)}${ch('ts-eq', 'paralela', 1, 'Paralelas (ou 2 cadeiras firmes)', !!TS.eq.paralela)}${ch('ts-eq', 'mesa', 1, 'Barra baixa / mesa firme', !!TS.eq.mesa)}</div>
+      <small class="mtip">Sem nada também funciona: as remadas viram exercícios de costas no chão e no canto da parede.</small></div>
     ${q('foco', 'Objetivo principal', [['emagrecer', 'Emagrecer sem perder músculo'], ['forca', 'Ganhar força']])}
     <div class="field mt12"><span>Habilidades para treinar (opcional)</span><div class="chips">${CAL.filter((f) => f.skill).map((f) => ch('ts-skill', f.id, 1, f.n + (f.steps.every((s) => s.eq === 'barra') && !TS.eq.barra ? ' (precisa de barra)' : ''), TS.skills.includes(f.id))).join('')}</div>
       <small class="mtip">Liberam na fase 3 e entram no começo do treino, quando você está descansado.</small></div>
@@ -581,7 +589,7 @@ Object.assign(A, {
     Object.assign(t, { dias: TS.dias, eq: TS.eq, eqCasa: TS.eqCasa, skills: TS.skills.filter((k) => Tr.avail(k).length || (calFam(k).steps.some((s) => !s.eq || TS.eq[s.eq]))), foco: TS.foco, fin: TS.fin });
     if (TS.first) {
       const pick = (fid, i) => { const av = Tr.avail(fid); if (av.length) t.lvl[fid] = av[Math.min(i, av.length - 1)].id; };
-      const fl = TS.flex ?? 0; pick('flexao', [1, 2, 3, 4][fl]); pick('paralela', [0, 1, 2, 4][fl]); pick('ombro', [0, 0, 0, 1][fl]); pick('remada', [0, 1, 1, 2][fl]); pick('core', [0, 0, 1, 1][fl]);
+      const fl = TS.flex ?? 0; pick('flexao', [1, 2, 3, 4][fl]); pick('paralela', [0, 1, 2, 4][fl]); pick('ombro', [0, 0, 0, 1][fl]); t.lvl.remada = ['remada_alta', 'remada', 'remada', 'remada_pes'][fl]; pick('core', [0, 0, 1, 1][fl]);
       const br = TS.barra ?? 0; pick('barra', [2, 3, 4, 5][br]);
       const ag = TS.agach ?? 0; pick('agach', [0, 1, 2][ag]); pick('posterior', [0, 0, 1][ag]);
       for (const k of t.skills) pick(k, 0);

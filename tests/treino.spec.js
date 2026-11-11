@@ -73,3 +73,30 @@ test('treino em casa troca a barra e mantém o gasto do treino de rua', async ({
   await page.click('[data-a=tr-loc][data-v=casa]');
   await expect(page.locator('.tr-next .hint')).toContainText('Adaptado para casa');
 });
+
+test('em casa sem nada, a remada vira costas no chão; com porta, toalha; com mesa, remada', async ({ page }) => {
+  await openApp(page, { tab: 'treino', setup: treinoPronto });
+  const r = await page.evaluate(() => {
+    const t = Tr.s(), rem = (loc) => Tr.planFor(1, loc).items.map((i) => calStep(i.step)).find((s) => calFam('remada').steps.includes(s));
+    const pede = () => Tr.planFor(1, 'casa').items.some((i) => calStep(i.step).eq);
+    const nada = rem('casa').id, nadaEquip = pede(), rua = rem('rua').id;
+    t.eqCasa.porta = true; const porta = rem('casa').id;
+    t.eqCasa.mesa = true; const mesa = rem('casa').id;
+    return { nada, nadaEquip, rua, porta, mesa, padrao: [t.eq.mesa, t.eq.porta] };
+  });
+  expect(['prone_hover', 'escap_canto', 'back_widow']).toContain(r.nada);
+  expect(r.nadaEquip).toBe(false);
+  expect(['remada_batente', 'remada_toalha', 'remada_toalha_1']).toContain(r.porta);
+  expect(r.mesa).toBe('remada');
+  expect(r.rua).toBe('remada');
+  expect(r.padrao).toEqual([true, false]);
+});
+
+test('montagem: em casa, porta e mesa aparecem desmarcadas', async ({ page }) => {
+  await openApp(page, { tab: 'treino' });
+  await page.click('[data-a=tr-setup]');
+  await expect(page.locator('[data-a=ts-eqc][data-k=mesa]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('[data-a=ts-eqc][data-k=porta]')).toHaveAttribute('aria-pressed', 'false');
+  await expect(page.locator('[data-a=ts-eq][data-k=mesa]')).toHaveAttribute('aria-pressed', 'true');
+  await expect(page.locator('.scrim:not(.out) .sheet')).toContainText('costas no chão e no canto da parede');
+});
