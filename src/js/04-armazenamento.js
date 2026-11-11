@@ -1,5 +1,7 @@
 /* ===================== ARMAZENAMENTO (local + nuvem) ===================== */
-const LS_KEY = 'biotrack:v4';
+// O app se chamava BioTrack: na primeira abertura como Brius, copia os dados das chaves antigas (sem apagar as antigas).
+try { for (const k of ['v4', 'paineis', 'bandeja']) if (localStorage.getItem('brius:' + k) == null && localStorage.getItem('biotrack:' + k) != null) localStorage.setItem('brius:' + k, localStorage.getItem('biotrack:' + k)); } catch (e) {}
+const LS_KEY = 'brius:v4';
 // Medidas corporais. down=true: diminuir é o esperado num emagrecimento (verde); false: neutro (ex.: braço pode crescer com treino)
 const MEASURES = [
   { k: 'waist', n: 'Cintura', tip: 'na altura do umbigo, barriga relaxada', down: true },

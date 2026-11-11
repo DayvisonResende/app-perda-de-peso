@@ -84,7 +84,7 @@ function edLive(fid, ed, pfx) {
 
 /* ---------- seletor de alimentos com bandeja */
 let FP = null;
-const DRAFT_KEY = 'biotrack:bandeja';
+const DRAFT_KEY = 'brius:bandeja';
 function fpOpen(target, preload) {
   FP = { target, q: '', src: 'all', open: null, ed: null, tray: [], trayOpen: false, view: 'list', confirm: false, ai: { text: '', busy: false, err: '' } };
   if (preload) { FP.tray = preload.map((it) => ({ tid: uid(), fid: it.id, g: it.g })); FP.trayOpen = true; }
@@ -515,14 +515,14 @@ function confirmOpen(title, body, okLabel, onOk, danger) {
 }
 function shopText() {
   const sh = shopS(), list = planIsEmpty(Store.core.plan) ? [] : shoppingList(Store.core.plan), ex = sh.extra, ck = sh.checked;
-  let out = '🛒 Lista da semana (BioTrack)\n', sec = '';
+  let out = '🛒 Lista da semana (Brius)\n', sec = '';
   for (const it of list) { if (ck[it.key] || sh.have[it.key]) continue; if (it.s !== sec) { sec = it.s; out += `\n*${sec}*\n`; } out += `▢ ${it.n} — ${sh.qty[it.key] || it.buy}\n`; }
   const exl = ex.filter((x) => !ck[x.id]); if (exl.length) out += `\n*Extras*\n` + exl.map((x) => `▢ ${x.n}${x.q ? ' — ' + x.q : ''}`).join('\n') + '\n';
   return out.trim();
 }
 async function doExport() {
-  const data = JSON.stringify({ app: 'biotrack', v: 4, exportedAt: new Date().toISOString(), ...Store.s }, null, 1);
-  const name = `biotrack-backup-${todayISO()}.json`;
+  const data = JSON.stringify({ app: 'brius', v: 4, exportedAt: new Date().toISOString(), ...Store.s }, null, 1);
+  const name = `brius-backup-${todayISO()}.json`;
   try {
     const dl = window.claude && window.claude.use ? await window.claude.use('downloads') : null;
     if (dl) { await dl.save({ filename: name, data }); App.toast('Backup salvo'); return; }
@@ -538,14 +538,14 @@ async function doExport() {
   textOpen('Backup', 'Copie e guarde este texto num lugar seguro', data);
 }
 function importOpen() {
-  Sheet.open({ label: 'Importar backup', render: () => `${sheetHead('Importar backup', 'Aceita backups deste app e da versão anterior do BioTrack')}
+  Sheet.open({ label: 'Importar backup', render: () => `${sheetHead('Importar backup', 'Aceita backups do Brius e das versões antigas (BioTrack)')}
     <div class="sheet-b"><button class="btn btn-soft btn-block" data-a="import-file">${ic('upload', 'sm')} Escolher arquivo .json</button>
     <p class="muted mt12" style="font-size:13.5px">Ou cole o conteúdo do backup:</p><textarea class="input mt8" id="import-text" style="min-height:160px" placeholder="{ ... }"></textarea></div>
     <div class="sheet-f"><button class="btn btn-primary grow" data-a="import-go">Importar</button></div>` });
 }
 function convertImport(raw) {
   if (raw && raw.core && raw.core.profile && raw.days) return { core: raw.core, days: raw.days };
-  if (raw && raw.users) { // BioTrack Pro (v3)
+  if (raw && raw.users) { // versão antiga: BioTrack Pro (v3)
     const u = raw.users[raw.activeUserId] || Object.values(raw.users)[0]; if (!u) return null;
     const p = u.profile || {};
     const age = p.birthDate ? Math.max(14, new Date().getFullYear() - Number(p.birthDate.slice(0, 4))) : 30;
@@ -560,7 +560,7 @@ function convertImport(raw) {
     core.customFoods = (u.customFoods || []).map((f) => ({ ...f, custom: true, por: f.por || [], u: f.u || 'g' }));
     return { core, days };
   }
-  if (raw && raw.profile && raw.logs) { // BioTrack Mobile (v2)
+  if (raw && raw.profile && raw.logs) { // versão antiga: BioTrack Mobile (v2)
     const p = raw.profile;
     const core = newCore({ name: '', sex: 'M', age: p.age || 30, height: p.height || 170, weight: p.weight || 80, goalWeight: (p.weight || 80) - 10, activity: 'sedentario', pace: 0.5, waist: p.waist || null, neck: p.neck || null });
     core.weights = raw.logs.map((l) => ({ id: l.id || uid(), date: l.date, weight: l.weight, waist: l.waist || null }));

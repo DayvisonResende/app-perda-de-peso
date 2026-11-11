@@ -27,3 +27,13 @@ test('painéis da tela Hoje abrem e fecham', async ({ page }) => {
   await fold.locator('[data-a=fold]').click();
   await expect(fold).toHaveClass(was ? /^(?!.*\bopen\b)/ : /\bopen\b/);
 });
+
+test('quem usava o app como BioTrack abre o Brius com os dados intactos', async ({ page }) => {
+  await openApp(page);
+  // simula um aparelho com dados só na chave antiga
+  await page.evaluate(() => { const v = localStorage.getItem('brius:v4'); localStorage.setItem('biotrack:v4', v); localStorage.removeItem('brius:v4'); });
+  await page.reload();
+  await page.waitForFunction(() => typeof Store !== 'undefined' && !!Store.core);
+  expect(await page.evaluate(() => [Store.p.name, !!localStorage.getItem('brius:v4'), !!localStorage.getItem('biotrack:v4')])).toEqual(['Teste', true, true]);
+  await expect(page.locator('.brand').first()).toContainText('Brius');
+});

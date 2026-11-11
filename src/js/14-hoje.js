@@ -1,6 +1,6 @@
 /* ===================== HOJE ===================== */
 // Painel recolhível da lateral; o estado aberto/fechado fica salvo neste aparelho
-const FOLD_KEY = 'biotrack:paineis';
+const FOLD_KEY = 'brius:paineis';
 const FOLD_DEFAULT = { agua: true, missoes: true };
 const Folds = {
   s: (() => { try { return JSON.parse(localStorage.getItem(FOLD_KEY) || '{}') || {}; } catch (e) { return {}; } })(),

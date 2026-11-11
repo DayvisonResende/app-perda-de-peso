@@ -2,7 +2,7 @@ import { test, expect } from './helpers.js';
 
 test('manifest e ícones respondem', async ({ request }) => {
   const man = await (await request.get('/manifest.webmanifest')).json();
-  expect(man.short_name).toBe('BioTrack');
+  expect(man.short_name).toBe('Brius');
   for (const i of man.icons) expect((await request.get('/' + i.src)).status()).toBe(200);
 });
 
@@ -14,7 +14,7 @@ test('service worker guarda o app e ele abre sem internet', async ({ page, conte
   expect(cached).toEqual(expect.arrayContaining(['/index.html', '/stickers.js']));
   await context.setOffline(true);
   await page.reload();
-  await expect(page).toHaveTitle(/BioTrack/);
+  await expect(page).toHaveTitle(/Brius/);
   await context.setOffline(false);
 });
 

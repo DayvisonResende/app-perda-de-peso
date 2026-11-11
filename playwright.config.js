@@ -1,4 +1,4 @@
-// Testes de ponta a ponta do BioTrack. Rodam sobre dist/ (gerado por `npm run build`).
+// Testes de ponta a ponta do Brius. Rodam sobre dist/ (gerado por `npm run build`).
 // Usa o Chrome instalado no sistema (channel: 'chrome'); em CI, troque por `npx playwright install chromium`.
 import { defineConfig, devices } from '@playwright/test';
 

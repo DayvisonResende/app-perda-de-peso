@@ -34,7 +34,7 @@ const App = {
   go(tab) { if (location.hash !== '#' + tab) location.hash = tab; else { ui.tab = tab; this.render(); } },
   renderNav() {
     const btn = (cls) => TABS.map((t) => `<button class="${cls}" data-a="tab" data-tab="${t.id}" ${ui.tab === t.id ? 'aria-current="page"' : ''}>${ic(t.ic)}<span>${t.label}</span></button>`).join('');
-    const brand = `<div class="brand"><span class="glyph">${ic('dial')}</span>BioTrack</div>`;
+    const brand = `<div class="brand"><span class="glyph">${ic('dial')}</span>Brius</div>`;
     const sync = `<span class="sync" data-s="${Sync.status}"><span class="dot"></span><span>${syncText()}</span></span>`;
     const show = !!Store.core && !ui.booting;
     $('#rail').innerHTML = show ? `${brand}${btn('railbtn')}<div class="sp"></div>${sync}` : brand;

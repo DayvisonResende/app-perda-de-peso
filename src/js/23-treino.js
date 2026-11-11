@@ -403,7 +403,7 @@ function bossCardHTML() {
     <div class="boss-top">${bossArt(b.color)}<div class="grow"><span class="tr-pat">Desafio da semana</span><h2>${b.name}</h2>
       <div class="boss-hp"><span>Meta</span><div class="bar">${'<span style="width:100%;background:var(--tomato)"></span>'}</div><b class="num">${fmt(b.hp)}</b></div></div></div>
     <ul class="boss-list">${b.items.map((i) => { const st = calStep(i.step); return `<li><b class="num">${i.target}${unit(st)}</b>${esc(st.n)}</li>`; }).join('')}</ul>
-    ${(Tr.s().fled || {})[b.wk] ? `<div class="boss-taunt"><b>BioTrack:</b> “${BOSS_TAUNTS[((Tr.s().fled[b.wk]) - 1) % BOSS_TAUNTS.length]}” <small>· você desistiu ${Tr.s().fled[b.wk]}×</small></div>` : ''}
+    ${(Tr.s().fled || {})[b.wk] ? `<div class="boss-taunt"><b>Brius:</b> “${BOSS_TAUNTS[((Tr.s().fled[b.wk]) - 1) % BOSS_TAUNTS.length]}” <small>· você desistiu ${Tr.s().fled[b.wk]}×</small></div>` : ''}
     <p class="muted" style="font-size:13px">Cada repetição conta. Faça quantas séries precisar, mas a meta toda tem que ser batida numa sessão só. Vitória: <b>+${XP.desafio} XP</b>.${b.tries ? ` Você já tentou ${b.tries}×; dá para tentar de novo até domingo.` : ''}</p>
     <button class="btn btn-boss mt12" data-a="tr-boss">${ic('bolt', 'sm')} Aceitar desafio</button>
   </section>`;
@@ -628,9 +628,9 @@ Object.assign(A, {
   'tr-cancel': () => { const t = Tr.s(), c = t.cur; if (!c) return;
     if (!c.boss) return confirmOpen('Descartar treino?', 'As séries anotadas neste treino serão perdidas.', 'Descartar', () => { t.cur = null; TrRest.stop(); trSave(); App.render(); }, true);
     const wk = weekStart(todayISO()), n = (t.fled && t.fled[wk]) || 0, hp = bossHP(c);
-    confirmOpen(`BioTrack: “${BOSS_STAY[n % BOSS_STAY.length]}”`, `Ainda faltam ${fmt(hp.left)} para completar. Se desistir, as séries deste desafio não contam e ele fica te esperando até domingo.`, 'Desistir mesmo assim', () => {
+    confirmOpen(`Brius: “${BOSS_STAY[n % BOSS_STAY.length]}”`, `Ainda faltam ${fmt(hp.left)} para completar. Se desistir, as séries deste desafio não contam e ele fica te esperando até domingo.`, 'Desistir mesmo assim', () => {
       t.fled = t.fled || {}; t.fled[wk] = n + 1; t.cur = null; TrRest.stop(); trSave(); App.render(); window.scrollTo(0, 0);
-      App.toast(`BioTrack: “${BOSS_TAUNTS[n % BOSS_TAUNTS.length]}”`);
+      App.toast(`Brius: “${BOSS_TAUNTS[n % BOSS_TAUNTS.length]}”`);
     }, true); },
   'tr-finish': () => {
     const t = Tr.s(), c = t.cur; if (!c) return;

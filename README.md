@@ -1,4 +1,4 @@
-# BioTrack
+# Brius
 
 Dieta, cardápio, treino de calistenia e progresso, num PWA que funciona offline.
 

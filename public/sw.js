@@ -1,9 +1,9 @@
-/* BioTrack — service worker
+/* Brius — service worker
    - App (index.html): rede primeiro, cache como reserva → atualizações chegam assim que há internet.
    - Ícones/manifest: cache primeiro.
    - Google Fonts: usa o cache e atualiza em segundo plano.
    Ao publicar uma versão nova, troque VERSION para limpar os caches antigos. */
-const VERSION = 'biotrack-v2';
+const VERSION = 'brius-v3';
 const SHELL = ['./', './index.html', './stickers.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (ev) => {

@@ -1,4 +1,4 @@
-/* BioTrack — adesivos (arquivo carregado sob demanda e guardado offline pelo service worker)
+/* Brius — adesivos (arquivo carregado sob demanda e guardado offline pelo service worker)
    · Níveis 1–30: desenho próprio do app, um por nível de XP.
    · Habilidades 1–30: arte criada no Claude web; liberam por feitos reais registrados no treino ou em testes.
    · Hábitos: selos pequenos de constância. */

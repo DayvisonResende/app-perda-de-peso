@@ -26,5 +26,5 @@ test('resultado do dia mostra gasto total, consumido e déficit', async ({ page 
 test('backup baixa um arquivo .json', async ({ page }) => {
   await openApp(page, { tab: 'perfil' });
   const [dl] = await Promise.all([page.waitForEvent('download'), page.click('[data-a=export]')]);
-  expect(dl.suggestedFilename()).toMatch(/^biotrack-backup-\d{4}-\d{2}-\d{2}\.json$/);
+  expect(dl.suggestedFilename()).toMatch(/^brius-backup-\d{4}-\d{2}-\d{2}\.json$/);
 });

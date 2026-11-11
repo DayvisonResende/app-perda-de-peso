@@ -9,9 +9,9 @@ test('desistir do desafio: o app provoca e o cartão guarda a provocação', asy
   const total = await page.evaluate(() => bossHP(Tr.s().cur).total);
   await expect(page.locator('[data-live=boss-hp]')).toHaveText(new Intl.NumberFormat('pt-BR').format(total - 5));
   await page.click('[data-a=tr-cancel]');
-  await expect(page.locator('.scrim:not(.out) .sheet')).toContainText('BioTrack:');
+  await expect(page.locator('.scrim:not(.out) .sheet')).toContainText('Brius:');
   await page.click('.scrim:not(.out) [data-a=confirm-ok]');
-  await expect(page.locator('#toast')).toContainText('BioTrack:');
+  await expect(page.locator('#toast')).toContainText('Brius:');
   await expect(page.locator('.boss-taunt')).toContainText('você desistiu 1×');
 });
 

@@ -21,4 +21,4 @@ createServer(async (req, res) => {
     const body = await readFile(file);
     res.writeHead(200, { 'Content-Type': TYPES[extname(file)] || 'application/octet-stream', 'Cache-Control': 'no-cache' }).end(body);
   } catch { res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('não encontrado'); }
-}).listen(PORT, '127.0.0.1', () => console.log(`BioTrack em http://localhost:${PORT}`));
+}).listen(PORT, '127.0.0.1', () => console.log(`Brius em http://localhost:${PORT}`));
