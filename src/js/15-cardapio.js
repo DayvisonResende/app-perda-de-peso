@@ -50,7 +50,7 @@ function planWeek(plan, d0) {
           <button class="icon-btn sm" data-a="pswap" data-m="${m.id}" data-x="${idx}" aria-label="Trocar ${esc(nm)}">${ic('swap', 'sm')}</button>
         </div>`;
       }).join('') || '<p class="muted" style="font-size:13.5px;margin:4px 0">Nada planejado nesta refeição.</p>'}
-      <div class="row mt8">
+      <div class="row mt8 wrap">
         <button class="btn btn-soft btn-sm" data-a="fp-planadd" data-m="${m.id}">${ic('plus', 'sm')} Adicionar alimento</button>
         ${items.length ? `<button class="btn btn-ghost btn-sm right" data-a="plan-log" data-m="${m.id}">${ic('check', 'sm')} Registrar hoje</button>` : ''}
       </div>
