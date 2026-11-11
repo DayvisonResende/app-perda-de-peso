@@ -98,3 +98,4 @@
 .grow{flex:1}
 .right{margin-left:auto}
 .ax-rope{fill:none;stroke:var(--carrot);stroke-width:3;stroke-linecap:round}
+.onb [aria-invalid="true"]{border-color:var(--tomato);box-shadow:0 0 0 3px var(--tomato-soft)}

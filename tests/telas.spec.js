@@ -1,8 +1,26 @@
 import { test, expect, openApp, treinoPronto } from './helpers.js';
 
-test('cadastro aparece para quem é novo', async ({ page }) => {
+test('cadastro: começa vazio, aponta o campo errado e cria o perfil com o que foi digitado', async ({ page }) => {
   await page.goto('/');
-  await expect(page.locator('#view')).toContainText(/Vamos|cadastro|Começar|Bem-vind/i, { timeout: 8000 });
+  await expect(page.locator('.onb h1')).toHaveText('Bem-vindo ao Brius', { timeout: 8000 });
+  for (const id of ['name', 'age', 'height', 'weight', 'goal', 'waist', 'neck']) await expect(page.locator('#ob-' + id)).toHaveValue('');
+  await expect(page.locator('#view')).not.toContainText('João');
+
+  await page.click('[data-a=ob-start]');
+  await expect(page.locator('#toast')).toContainText('Selecione o sexo');
+  await expect(page.locator('#ob-sex')).toHaveAttribute('aria-invalid', 'true');
+
+  await page.selectOption('#ob-sex', 'F');
+  await page.fill('#ob-name', 'Ana'); await page.fill('#ob-age', '34'); await page.fill('#ob-height', '163');
+  await page.fill('#ob-weight', '74,5'); await page.fill('#ob-goal', '80');
+  await page.click('[data-a=ob-start]');
+  await expect(page.locator('#toast')).toContainText('menor que o peso de hoje');
+  await expect(page.locator('#ob-goal')).toBeFocused();
+
+  await page.fill('#ob-goal', '65');
+  await page.click('[data-a=ob-start]');
+  await expect(page.locator('#view h1').first()).toContainText('Ana');
+  expect(await page.evaluate(() => { const p = Store.p; return [p.name, p.sex, p.age, p.height, p.weight, p.goalWeight, p.waist]; })).toEqual(['Ana', 'F', 34, 163, 74.5, 65, null]);
 });
 
 for (const [tab, titulo] of [['hoje', /Boa|Bom|Registro/], ['cardapio', 'Cardápio da semana'], ['treino', 'Treino'], ['progresso', 'Progresso'], ['perfil', 'Perfil e metas']]) {
