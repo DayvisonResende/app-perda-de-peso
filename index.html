@@ -399,6 +399,10 @@ textarea.input{padding:12px 14px;min-height:84px;resize:vertical;line-height:1.4
 @media (max-width:420px){.tr-how{grid-template-columns:104px 1fr}}
 .jr-top{display:flex;gap:14px;align-items:center}
 .jr-badge{width:62px;height:62px;border-radius:18px;background:linear-gradient(145deg,var(--kale),color-mix(in srgb,var(--kale) 60%,var(--ink)));color:var(--kale-ink);display:grid;place-items:center;align-content:center;flex:none;box-shadow:0 8px 20px color-mix(in srgb,var(--kale) 30%,transparent)}
+.jr-badge{cursor:pointer;border:0}
+.jr-badge:hover{transform:translateY(-2px) rotate(-2deg)}
+.jr-badge:focus-visible{outline:3px solid var(--carrot);outline-offset:3px}
+.jr-stk{display:inline-flex;align-items:center;gap:4px;margin-left:6px;vertical-align:middle;font-family:var(--body);font-size:12px;font-weight:800;color:var(--carrot);background:var(--carrot-soft);padding:3px 9px;border-radius:99px}
 .jr-badge small{font-size:10.5px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;opacity:.85;line-height:1}
 .jr-badge b{font-family:var(--display);font-size:28px;line-height:1}
 .jr-title{display:block;font-family:var(--display);font-size:18px}
@@ -2198,6 +2202,7 @@ function viewPerfil() {
   <div class="page-h"><div><h1>Perfil e metas</h1><p class="muted">As mudanças são salvas na hora e recalculam tudo.</p></div></div>
   <div class="prog-grid">
     <div>
+      ${albumPanelHTML()}
       <section class="panel">
         <div class="ph"><h2>Você</h2></div>
         <div class="grid2">
@@ -3596,6 +3601,7 @@ function viewTreino() {
   return head(sub, `<button class="btn btn-ghost btn-sm" data-a="tr-setup">${ic('pencil', 'sm')} Ajustar plano</button>`) + `
   <div class="tr-grid"><div>
     ${journeyHTML()}
+    ${albumPanelHTML()}
     ${bossCardHTML()}
     <section class="panel tr-next">
       ${hasCasa ? `<div class="tr-loc"><span>Onde você vai treinar?</span><div class="seg">${[['rua', 'Rua / academia', 'run'], ['casa', 'Em casa', 'home']].map(([k, l, i]) => `<button data-a="tr-loc" data-v="${k}" aria-pressed="${t.loc === k}">${ic(i, 'sm')} ${l}</button>`).join('')}</div></div>` : ''}
@@ -3616,7 +3622,6 @@ function viewTreino() {
     </section>
   </div><div class="prog-side">
     ${missionsHTML(true)}
-    ${albumPanelHTML()}
     ${phaseHTML()}
     <section class="panel"><div class="ph"><h2>Histórico</h2><span class="sub">${t.logs.length} treinos</span></div>${hist ? `<ul class="hist">${hist}</ul>` : '<p class="muted" style="font-size:13.5px">Seus treinos finalizados aparecem aqui.</p>'}</section>
   </div></div>`;
@@ -3624,7 +3629,7 @@ function viewTreino() {
 
 /* ---------- Adesivos: níveis (XP), habilidades (feitos reais) e hábitos (constância) */
 let _stkP = null;
-const loadStickers = () => _stkP || (_stkP = new Promise((ok) => { if (window.BT_STICKERS) return ok(window.BT_STICKERS); const sc = document.createElement('script'); sc.src = 'stickers.js'; sc.onload = () => ok(window.BT_STICKERS); sc.onerror = () => { _stkP = null; ok(null); }; document.head.appendChild(sc); }));
+const loadStickers = () => _stkP || (_stkP = new Promise((ok) => { if (window.BT_STICKERS) return ok(window.BT_STICKERS); const sc = document.createElement('script'); sc.src = 'stickers.js'; sc.onload = () => { ok(window.BT_STICKERS); if (document.querySelector('#view .stk-ph')) { const y = window.scrollY; App.render(); window.scrollTo(0, y); } }; sc.onerror = () => { _stkP = null; ok(null); }; document.head.appendChild(sc); }));
 const STK = () => window.BT_STICKERS;
 // regra de cada adesivo de habilidade: [níveis que contam, alvo] ou função
 const SKILL_RULES = [
@@ -3685,7 +3690,7 @@ function newStickers() {
 const stkName = (x) => (x.kind === 'nivel' ? (STK() ? STK().levelMeta[x.i - 1].n : `Nível ${x.i}`) : x.kind === 'hab' ? (STK() ? STK().skillMeta[x.i - 1].n : `Habilidade ${x.i}`) : x.h.n);
 const stkDesc = (x) => (x.kind === 'nivel' ? (STK() ? STK().levelMeta[x.i - 1].f : '') : x.kind === 'hab' ? (STK() ? STK().skillMeta[x.i - 1].d : '') : x.h.d);
 const stkLabel = (x) => (x.kind === 'nivel' ? `Nível ${x.i}` : x.kind === 'hab' ? `Habilidade ${x.i}/30` : 'Hábito');
-function stkSVG(x, locked) { const S = STK(); if (!S) return `<div class="stk-ph">${x.kind === 'nivel' ? x.i : '★'}</div>`; return x.kind === 'nivel' ? S.level(x.i, { locked }) : x.kind === 'hab' ? S.skill(x.i, { locked }) : S.habit(x.h.ic, { locked }); }
+function stkSVG(x, locked) { const S = STK(); if (!S) { loadStickers(); return `<div class="stk-ph">${x.kind === 'nivel' ? x.i : '★'}</div>`; } return x.kind === 'nivel' ? S.level(x.i, { locked }) : x.kind === 'hab' ? S.skill(x.i, { locked }) : S.habit(x.h.ic, { locked }); }
 function stkNewHTML(fresh) {
   if (!fresh.length) return '';
   return `<div class="stk-new"><p><b>${fresh.length > 1 ? `${fresh.length} adesivos novos` : 'Adesivo novo!'}</b></p><div class="stk-new-row">${fresh.slice(0, 6).map((x, k) => `<button class="stk-card" data-a="stk-open" data-k="${x.key}" style="--d:${k * 0.12}s"><span class="stk-peel">${stkSVG(x)}</span><b>${esc(stkName(x))}</b><small>${stkLabel(x)}${x.kind === 'habito' ? ` · +${x.h.xp} XP` : ''}</small></button>`).join('')}</div></div>`;
@@ -3738,8 +3743,8 @@ function bossCardHTML() {
 function journeyHTML() {
   const xp = Tr.xp(), lv = Tr.levelOf(xp), st = Tr.streak();
   return `<section class="panel jr">
-    <div class="jr-top"><div class="jr-badge"><small>nível</small><b class="num">${lv.L}</b></div>
-      <div class="grow"><b class="jr-title">${lv.title}</b><small class="muted num">${fmt(xp - lv.from)} / ${fmt(lv.to - lv.from)} XP para o nível ${lv.L + 1}</small><div class="mt8">${bar(xp - lv.from, lv.to - lv.from, 'var(--carrot)')}</div></div>
+    <div class="jr-top"><button class="jr-badge" data-a="album-open" aria-label="Nível ${lv.L}. Abrir álbum de adesivos"><small>nível</small><b class="num">${lv.L}</b></button>
+      <div class="grow"><b class="jr-title">${lv.title} <button class="jr-stk" data-a="album-open">${ic('star', 'sm')} ${stickerList().filter((x) => x.done).length} adesivos</button></b><small class="muted num">${fmt(xp - lv.from)} / ${fmt(lv.to - lv.from)} XP para o nível ${lv.L + 1}</small><div class="mt8">${bar(xp - lv.from, lv.to - lv.from, 'var(--carrot)')}</div></div>
       <div class="jr-streak" title="Dias seguidos com 3 ou mais missões">${ic('flame', 'sm')}<b class="num">${st}</b><small>${st === 1 ? 'dia' : 'dias'}</small></div></div>
     <div class="jr-attrs">${Tr.attrs().map((a) => `<div><span>${a.n}</span>${bar(a.v, 100, 'var(--kale)')}</div>`).join('')}</div>
   </section>`;
