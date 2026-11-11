@@ -36,9 +36,16 @@ Ao criar um arquivo novo, escolha o número pela ordem em que ele precisa ser li
 
 ### Publicar uma versão nova
 
-1. `npm test`
-2. Se mudou algo em `public/` (ex.: `stickers.js`), troque `VERSION` em `public/sw.js` para os celulares baixarem a versão nova.
-3. Envie a pasta `dist/` para o servidor (HTTPS é obrigatório para instalar como app).
+O GitHub publica sozinho (`.github/workflows/deploy.yml`):
+
+- **Pull Request ou push em qualquer branch:** roda os testes.
+- **Push na `main`:** roda os testes e, se todos passarem, publica `dist/` no GitHub Pages em
+  https://dayvisonresende.github.io/app-perda-de-peso/
+
+Se mudou algo em `public/` (ex.: `stickers.js`), troque `VERSION` em `public/sw.js` para os celulares baixarem a versão nova.
+Se um teste falhar no GitHub, o relatório fica em Actions → execução → Artifacts → `resultados-dos-testes`.
+
+Configuração única no GitHub: Settings → Pages → Source: **GitHub Actions**.
 
 ## Fontes
 
