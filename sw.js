@@ -3,8 +3,8 @@
    - Ícones/manifest: cache primeiro.
    - Google Fonts: usa o cache e atualiza em segundo plano.
    Ao publicar uma versão nova, troque VERSION para limpar os caches antigos. */
-const VERSION = 'biotrack-v1';
-const SHELL = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
+const VERSION = 'biotrack-v2';
+const SHELL = ['./', './index.html', './stickers.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png', './icons/apple-touch-icon.png'];
 
 self.addEventListener('install', (ev) => {
   ev.waitUntil(caches.open(VERSION).then((c) => c.addAll(SHELL)).then(() => self.skipWaiting()));
