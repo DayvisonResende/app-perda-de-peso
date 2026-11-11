@@ -25,11 +25,7 @@
 .chip{display:inline-flex;align-items:center;gap:6px;min-height:36px;padding:0 13px;border-radius:999px;border:1px solid var(--line);background:var(--surface);font-weight:600;font-size:13.5px;color:var(--muted);white-space:nowrap}
 .chip[aria-pressed="true"]{background:var(--kale);border-color:var(--kale);color:var(--kale-ink)}
 .chip.ai[aria-pressed="true"]{background:var(--carrot);border-color:var(--carrot);color:#fff}
-.seg{display:inline-flex;max-width:100%;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:4px;gap:2px}
-@media (max-width:400px){.seg button{padding:0 10px;font-size:13.5px;min-width:0}.seg button svg.i{display:none}}
-/* campos e colunas podem encolher até a largura da tela (um select com opção longa não alarga a página) */
-select.input{min-width:0;max-width:100%;text-overflow:ellipsis}
-.field,.grid2 > *,.prog-grid > *,.panel{min-width:0}
+.seg{display:inline-flex;background:var(--surface-2);border:1px solid var(--line);border-radius:14px;padding:4px;gap:2px}
 .seg button{min-height:38px;padding:0 14px;border-radius:10px;font-weight:700;font-size:14px;color:var(--muted);display:inline-flex;align-items:center;gap:7px}
 .seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
 .field{display:flex;flex-direction:column;gap:6px}
