@@ -244,7 +244,14 @@ const A = {
   'ob-start': () => {
     const g = (id) => document.getElementById('ob-' + id);
     const weight = num(g('weight').value), height = num(g('height').value), age = num(g('age').value), goal = num(g('goal').value);
-    if (!weight || weight < 30 || !height || height < 120 || !age || age < 14 || !goal) { App.toast('Confira peso, altura, idade e meta'); return; }
+    document.querySelectorAll('.onb [aria-invalid]').forEach((x) => x.removeAttribute('aria-invalid'));
+    const bad = (id, msg) => { const el = g(id); el.setAttribute('aria-invalid', 'true'); el.focus(); App.toast(msg); };
+    if (!g('sex').value) return bad('sex', 'Selecione o sexo biológico: ele muda o cálculo do metabolismo');
+    if (!age || age < 14 || age > 100) return bad('age', 'Confira a idade (14 a 100 anos)');
+    if (!height || height < 120 || height > 230) return bad('height', 'Confira a altura, em centímetros (ex.: 170)');
+    if (!weight || weight < 30 || weight > 300) return bad('weight', 'Confira o peso de hoje, em kg (ex.: 80,5)');
+    if (!goal || goal < 30) return bad('goal', 'Confira o peso meta, em kg');
+    if (goal >= weight) return bad('goal', 'A meta precisa ser menor que o peso de hoje para emagrecer');
     const pace = Number((document.querySelector('#ob-pace [aria-pressed="true"]') || {}).dataset?.v || 0.5);
     Store.s.core = newCore({ name: g('name').value.trim(), sex: g('sex').value, age, height, weight, goalWeight: goal, activity: g('act').value, pace, waist: num(g('waist').value), neck: num(g('neck').value) });
     Store.saveCore(); App.go('hoje'); App.render();
